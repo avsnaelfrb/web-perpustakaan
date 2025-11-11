@@ -10,6 +10,14 @@ export default async function register(req, res){
     }
 
     try {
+        const existUser = await prisma.user.findUnique({
+            where : { email }
+        })
+
+        if(existUser) {
+            return res.status(401).json({ message: "email sudah terdaftar" })
+        }
+
         const salt = await bcrypt.genSalt(10)
         const hashedPassword = await bcrypt.hash(password, salt)
 
