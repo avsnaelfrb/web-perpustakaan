@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function Login() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -184,7 +186,7 @@ export default function Login() {
 
           {/* Register Link */}
           <div className="mt-6 text-center">
-            <button onClick={() => window.location.href = '/register'}
+            <button onClick={() => navigate ('/register')}
               className="text-blue-600 hover:text-blue-700 font-medium">
               Daftar akun
               </button>
