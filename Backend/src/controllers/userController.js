@@ -1,6 +1,6 @@
 import prisma from "../config/prismaConfig.js";
 import bcrypt from "bcryptjs"
-// import jwt from "jsonwebtoken"
+import jwt from "jsonwebtoken"
 
 export default async function register(req, res){
     const { name, email, password, nim } = req.body;
@@ -32,4 +32,46 @@ export default async function register(req, res){
             status : "error"
         })
     }
+    return;
 } 
+
+export const login = async(req, res) => {
+    const { email, password } = req.body;
+
+    try {
+        const user = await prisma.user.findUnique({
+            where : { email }
+        });
+        const passwordMatch = await bcrypt.compare(password, user.password);
+        const payload = {id: user.id, role: user.role};
+        const secret = process.env.JWT_SECRET
+        const token = jwt.sign(payload, secret, {expiresIn: "1d"})
+
+        console.log(user.password);
+        
+        if(!user){
+            return res.status(401).json({ message: "user tidak ditemukan" })
+        }
+
+        if(!passwordMatch){
+            return res.status(402).json({ message: "Password salah" })
+        }
+
+        res.status(200).json({ 
+            status: "succes",
+            message: "berhasil login",
+            data: {
+                id : user.id,
+                name : user.name,
+                email,
+                role : user.role
+            },
+            token 
+        })
+    } catch (error) {
+        res.status(500).json({
+            status: "error", 
+            message: error.message
+        })
+    }
+}
