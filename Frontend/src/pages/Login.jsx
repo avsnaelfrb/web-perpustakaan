@@ -184,12 +184,10 @@ export default function Login() {
 
           {/* Register Link */}
           <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Belum punya akun?{' '}
-              <a href="#" className="font-medium text-indigo-600 hover:text-indigo-500">
-                Daftar akun
-              </a>
-            </p>
+            <button onClick={() => window.location.href = '/register'}
+              className="text-blue-600 hover:text-blue-700 font-medium">
+              Daftar akun
+              </button>
           </div>
         </div>
 
