@@ -14,29 +14,80 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  USER
-  ADMIN
-}
-
 model User {
-  id              Int       @id     @default(autoincrement())
-  name            String    
-  email           String    @unique
-  password        String  
-  role            Role      @default(USER)
-  nim             Int       @unique
-  photo_profile   String?  
+  id           Int       @id @default(autoincrement())
+  name         String
+  email        String    @unique
+  nim          Int       @unique
+  password     String
+  role         Role      @default(USER)
+  photoProfile String?  
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  borrows      Borrow[]
+  readLogs     ReadLog[]
 }
 
-model Post {
-  id            Int      @id   @default(autoincrement())
-  judul         String  
-  penulis       String 
-  category      String
-  genre         String
-  tahun_terbit  Int
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+model Book {
+  id           Int       @id @default(autoincrement())
+  title        String
+  author       String
+  description  String?
+  coverUrl     String?
+  type         BookType  
+  genreId      Int
+  stock        Int       @default(1)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  genre        Genre     @relation(fields: [genreId], references: [id])
+  borrows      Borrow[]
+  readLogs     ReadLog[]
+}
+
+model Genre {
+  id       Int     @id @default(autoincrement())
+  name     String  @unique
+  books    Book[]
+}
+
+model Borrow {
+  id           Int       @id @default(autoincrement())
+  userId       Int
+  bookId       Int
+  borrowDate   DateTime  @default(now())
+  returnDate   DateTime?
+  status       BorrowStatus @default(BORROWED)
+
+  user         User      @relation(fields: [userId], references: [id])
+  book         Book      @relation(fields: [bookId], references: [id])
+}
+
+model ReadLog {
+  id         Int       @id @default(autoincrement())
+  userId     Int
+  bookId     Int
+  readAt     DateTime  @default(now())
+
+  user       User      @relation(fields: [userId], references: [id])
+  book       Book      @relation(fields: [bookId], references: [id])
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum BookType {
+  BOOK
+  JOURNAL
+  ARTICLE
+}
+
+enum BorrowStatus {
+  BORROWED
+  RETURNED
+  LATE
 }
 
