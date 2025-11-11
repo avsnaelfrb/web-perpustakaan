@@ -139,6 +139,8 @@ export default function Register() {
                 name="nim"
                 value={formData.nim}
                 onChange={handleChange}
+                min="0"
+                step="1"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
                 placeholder="Masukkan NIM"
                 required
