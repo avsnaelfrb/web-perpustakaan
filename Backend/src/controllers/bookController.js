@@ -34,26 +34,33 @@ export const getAllBook = async (req, res) => {
   try {
     const { genreId, type, search } = req.query;
 
-    const filters = {};
+    let filters = {};
 
-    if (genreId) filters.genreId = Number(genreId);
-    if (type) filters.type = type;
+    if (genreId) {
+      filters.genreId = Number(genreId);
+    }
+    if (type) {
+      filters.type = type;
+    }
     if (search) {
       filters.OR = [
-        { title: { contains: search, mode: "insensitive" } },
-        { author: { contains: search, mode: "insensitive" } },
-        { description: { contains: search, mode: "insensitive" } },
+        { title: { contains: search } },
+        { author: { contains: search } },
+        { description: { contains: search } },
       ];
     }
-
     const books = await prisma.book.findMany({
       where: filters,
       include: { genre: true },
       orderBy: { createdAt: "desc" },
     });
 
-    res.json(books);
+    res.status(200).json({
+      status: "success",
+      data: books,
+    });
   } catch (error) {
+    console.error("Terjadi error di getAllBook:", error);
     res.status(500).json({ message: "Gagal mengambil data buku." });
   }
 };
