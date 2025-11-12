@@ -24,7 +24,7 @@ export default function Login() {
     setError('');
     setLoading(true);
 
-    // Validation
+    // Validasi
     if (!formData.email || !formData.password) {
       setError('Email dan password harus diisi');
       setLoading(false);
@@ -32,7 +32,6 @@ export default function Login() {
     }
 
     try {
-      // TODO: Replace with your actual API endpoint
       const response = await fetch('http://localhost:YOUR_BACKEND_PORT/api/login', {
         method: 'POST',
         headers: {
@@ -44,10 +43,12 @@ export default function Login() {
       const data = await response.json();
 
       if (response.ok) {
-        // Store token in localStorage
+        // Simpan token dan role
         localStorage.setItem('token', data.token);
-        // Redirect to dashboard
-        window.location.href = '/dashboard';
+        localStorage.setItem('role', data.role || 'user');
+      
+        // Login sesuai role
+        navigate(data.role === 'admin' ? '/DashboardAdmin' : '/DashboardUser');
       } else {
         setError(data.message || 'Login gagal');
       }
@@ -60,7 +61,6 @@ export default function Login() {
   };
 
   return (
-    
 
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4">
       <div className="max-w-md w-full">
