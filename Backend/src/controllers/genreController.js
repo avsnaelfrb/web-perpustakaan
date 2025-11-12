@@ -53,6 +53,10 @@ export const getById = async (req, res) => {
       where: { id: Number(id) },
       include: { books: true }
     });
+
+    if(!genreId){
+      return res.status(404).json({ message: `idak dapat menemukan genre dengan id ${id}` })
+    }
     res.status(200).json({
       status: "success",
       message: "berhasil mengambil data genre",
