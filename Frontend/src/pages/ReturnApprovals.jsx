@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from 'react';
-//import { fetchJson } from '../utils/api';
+import api from '../utils/api';
 
 export default function ReturnApprovals(){
   const [returns, setReturns] = useState([]);
   const load = async () => {
-    const res = await fetchJson('/return-requests');
+    const res = await api.post('/return-requests');
     if (res.ok) setReturns(res.data || []);
   };
   useEffect(() => { load(); }, []);
 
   const approve = async (id) => {
-    const res = await fetchJson(`/return/${id}/approve`, { method: 'POST' });
+    const res = await api.post(`/return/${id}/approve`, { method: 'POST' });
     if (res.ok) load();
     else alert('Gagal approve pengembalian');
   };

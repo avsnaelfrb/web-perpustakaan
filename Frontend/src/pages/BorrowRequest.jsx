@@ -1,17 +1,17 @@
 import React, { useEffect, useState } from 'react';
-//import { fetchJson } from '../utils/api';
+import api from '../utils/api';
 
 export default function BorrowRequests(){
   const [requests, setRequests] = useState([]);
 
   const load = async () => {
-    const res = await fetchJson('/borrow-requests');
+    const res = await api.post('/borrow-requests');
     if (res.ok) setRequests(res.data || []);
   };
   useEffect(() => { load(); }, []);
 
   const approve = async (id) => {
-    const res = await fetchJson(`/borrow/${id}/approve`, { method: 'POST' });
+    const res = await api.post(`/borrow/${id}/approve`, { method: 'POST' });
     if (res.ok) load();
     else alert('Gagal approve');
   };

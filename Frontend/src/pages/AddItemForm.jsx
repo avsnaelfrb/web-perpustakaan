@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-//import { fetchJson } from '../utils/api';
+import api from '../utils/api';
 
 export default function AddItemForm({ onAdded }) {
   const [form, setForm] = useState({ title:'', author:'', type:'book', category:'', genre:'', year:'', stock:1 });
@@ -8,7 +8,7 @@ export default function AddItemForm({ onAdded }) {
   const submit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    const res = await fetchJson('/items', { method: 'POST', body: JSON.stringify(form) });
+    const res = await api.post('/items', { method: 'POST', body: JSON.stringify(form) });
     if (res.ok) {
       onAdded(res.data);
       setForm({ title:'', author:'', type:'book', category:'', genre:'', year:'', stock:1 });
