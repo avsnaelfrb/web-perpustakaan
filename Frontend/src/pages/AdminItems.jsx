@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-//import { fetchJson } from '../utils/api';
+import api from '../utils/api';
 import AddItemForm from './AddItemForm';
 
 export default function AdminItems(){
@@ -7,7 +7,7 @@ export default function AdminItems(){
   const [showForm, setShowForm] = useState(false);
 
   const load = async () => {
-    const res = await fetchJson('/items?limit=1000');
+    const res = await api.post('/items?limit=1000');
     if (res.ok) setItems(res.data.items || []);
   };
 

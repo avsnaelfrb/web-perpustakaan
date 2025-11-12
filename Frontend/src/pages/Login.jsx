@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import api from '../utils/api';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -23,43 +24,55 @@ export default function Login() {
     e.preventDefault();
     setError('');
     setLoading(true);
-
+  
     // Validasi
     if (!formData.email || !formData.password) {
       setError('Email dan password harus diisi');
       setLoading(false);
       return;
     }
-
+  
     try {
-      const response = await fetch('http://localhost:YOUR_BACKEND_PORT/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        // Simpan token dan role
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('role', data.role || 'user');
-      
-        // Login sesuai role
-        navigate(data.role === 'admin' ? '/DashboardAdmin' : '/DashboardUser');
+      const res = await api.post('/user/login', formData);
+      // Struktur respon backend: { status, message, data: { ...user }, token }
+      const body = res.data;
+      const token = body?.token;
+      const user = body?.data;
+  
+      // cek keberhasilan (backendmu pakai status "succes")
+      const ok = res.status >= 200 && res.status < 300 && body;
+      if (ok && token && user) {
+        // simpan token & user
+        localStorage.setItem('token', token);
+        localStorage.setItem('role', (user.role || 'USER')); // sesuaikan default
+        localStorage.setItem('currentUser', JSON.stringify(user));
+  
+        // redirect sesuai role (sesuaikan route-nya)
+        if ((user.role || '').toUpperCase() === 'ADMIN') {
+          navigate('/DashboardAdmin'); // atau '/admin' sesuai rute-mu
+        } else {
+          navigate('/DashboardUser'); // atau '/dashboard' sesuai rute-mu
+        }
       } else {
-        setError(data.message || 'Login gagal');
+        // fallback pesan error dari backend
+        setError(body?.message || 'Login gagal');
       }
     } catch (err) {
-      setError('Terjadi kesalahan. Silakan coba lagi.');
       console.error('Login error:', err);
+      // jika server memberikan pesan error, tampilkan
+      const serverMsg = err.response?.data?.message;
+      if (serverMsg) {
+        setError(serverMsg);
+      } else if (err.code === 'ERR_NETWORK' || err.message === 'Network Error') {
+        setError('Terjadi kesalahan jaringan / CORS. Periksa backend dan konfigurasi CORS.');
+      } else {
+        setError('Terjadi kesalahan. Silakan coba lagi.');
+      }
     } finally {
       setLoading(false);
     }
   };
-
+  
   return (
 
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4">
