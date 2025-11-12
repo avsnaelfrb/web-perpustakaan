@@ -32,14 +32,29 @@ export const createBook = async (req, res) => {
 
 export const getAllBook = async (req, res) => {
   try {
-    const allBook = await prisma.book.findMany();
-    res.status(200).json({
-      message: "berhasil mengambil semua data",
-      data: allBook,
-      status: "succes",
+    const { genreId, type, search } = req.query;
+
+    const filters = {};
+
+    if (genreId) filters.genreId = Number(genreId);
+    if (type) filters.type = type;
+    if (search) {
+      filters.OR = [
+        { title: { contains: search, mode: "insensitive" } },
+        { author: { contains: search, mode: "insensitive" } },
+        { description: { contains: search, mode: "insensitive" } },
+      ];
+    }
+
+    const books = await prisma.book.findMany({
+      where: filters,
+      include: { genre: true },
+      orderBy: { createdAt: "desc" },
     });
+
+    res.json(books);
   } catch (error) {
-    res.status(500).json({ message: error.message, status: "error" });
+    res.status(500).json({ message: "Gagal mengambil data buku." });
   }
 };
 
@@ -88,33 +103,32 @@ export const UpdateBook = async (req, res) => {
         stock: stock ? Number(stock) : 1,
       },
     });
-    res
-      .status(200)
-      .json({
-        message: `berhasil mengupdate buku dengan id ${id}`,
-        data: updatedBook,
-        status: "succes"
-      });
+    res.status(200).json({
+      message: `berhasil mengupdate buku dengan id ${id}`,
+      data: updatedBook,
+      status: "succes",
+    });
   } catch (error) {
     res.status(500).json({
-        message: error.message, status: "error"
-    })
+      message: error.message,
+      status: "error",
+    });
   }
 };
 
 export const deleteBook = async (req, res) => {
-    const { id } = req.params
-    try {
-        const delBook = await prisma.book.delete({
-            where: {id: Number(id)}
-        })
-        res.status(200).json({
-            message: `berhasil menghapus data buku dengan id ${id}`,
-            data : delBook
-        })
-    } catch (error) {
-        res.status(500).json({
-            message: error.message
-        })
-    }
-}
+  const { id } = req.params;
+  try {
+    const delBook = await prisma.book.delete({
+      where: { id: Number(id) },
+    });
+    res.status(200).json({
+      message: `berhasil menghapus data buku dengan id ${id}`,
+      data: delBook,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
