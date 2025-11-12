@@ -9,3 +9,5 @@ route.get("/", getAll)
 route.get("/:id", getById)
 route.put("/:id", updateGenre)
 route.delete("/:id", deleteGenre)
+
+export default route
