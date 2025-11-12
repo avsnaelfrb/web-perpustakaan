@@ -51,6 +51,7 @@ export const getById = async (req, res) => {
 
     const genreId = await prisma.genre.findUnique({
       where: { id: Number(id) },
+      include: { books: true }
     });
     res.status(200).json({
       status: "success",
@@ -68,7 +69,10 @@ export const updateGenre = async (req, res) => {
     const { name } = req.body;
 
     const dataToUpdate = {};
-    name && dataToUpdate.name;
+    
+    if (name) {
+      dataToUpdate.name = name;  
+    } 
 
     const updatedGenre = await prisma.genre.update({
       where: { id: Number(id) },
