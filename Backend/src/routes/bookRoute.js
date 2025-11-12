@@ -13,7 +13,7 @@ const route = express.Router();
 route.post("/", verifyToken, isAdmin, createBook);
 route.get("/", getAllBook);
 route.get("/:id", getBookById);
-route.put("/:id", UpdateBook);
+route.put("/:id", verifyToken, isAdmin, UpdateBook);
 route.delete("/:id", deleteBook);
 
 export default route;
