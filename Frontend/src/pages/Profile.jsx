@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
-//import { fetchJson } from '../utils/api';
+import api from '../utils/api';
 
 export default function Profile(){
   const [profile, setProfile] = useState(null);
   const [history, setHistory] = useState([]);
   useEffect(() => {
     (async () => {
-      const res = await fetchJson('/me');
+      const res = await api.post('/me');
       if (res.ok) setProfile(res.data);
-      const h = await fetchJson('/my-borrows');
+      const h = await api.post('/my-borrows');
       if (h.ok) setHistory(h.data || []);
     })();
   }, []);
