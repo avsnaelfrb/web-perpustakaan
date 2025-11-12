@@ -65,13 +65,19 @@ export const getAllBook = async (req, res) => {
   }
 };
 
-export const getBookById = async (req, res) => {
-  const { id } = req.params;
-
+export const getBookById = async (req, res) => {  
   try {
+    const { id } = req.params;
     const book = await prisma.book.findUnique({
       where: { id: Number(id) },
     });
+
+    if (!book) {
+      return res
+        .status(404)
+        .json({ message: `Buku dengan id ${id} tidak ditemukan.` });
+    }
+
     res.status(200).json({
       message: `berhasil mengambil data buku dengan id ${id}`,
       data: book,
