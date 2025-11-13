@@ -14,89 +14,110 @@ export default function Catalog() {
   const load = async () => {
     setLoading(true);
     setError('');
+
     try {
-      const paramsObj = { page, limit: 12 };
-      Object.entries(filters).forEach(([k, v]) => {
-        if (v !== undefined && v !== null && String(v).trim() !== '') paramsObj[k] = v;
+      const params = { page, limit: 12 };
+
+      Object.entries(filters).forEach(([key, val]) => {
+        if (String(val).trim() !== '') params[key] = val;
       });
 
-      // Sesuaikan endpoint backend-mu; aku pakai /book seperti yang kamu sebutkan
-      const res = await api.get('/book', { params: paramsObj });
+      const res = await api.get('/book', { params });
 
-      // adaptif terhadap beberapa struktur response
-      const payload = res.data;
-      const itemsList = payload?.data?.items ?? payload?.items ?? payload?.data ?? payload ?? [];
-      const totalCount = payload?.data?.total ?? payload?.total ?? (Array.isArray(itemsList) ? itemsList.length : 0);
+      // BACKEND format general:
+      // { data: { items: [...], total: X } }
+      const data = res?.data?.data;
+      const list = data?.items ?? [];
+      const count = data?.total ?? list.length;
 
-      setItems(Array.isArray(itemsList) ? itemsList : []);
-      setTotal(Number(totalCount) || 0);
+      setItems(list);
+      setTotal(count);
+
     } catch (err) {
-      console.error('Failed to load items:', err);
-      const msg = err.response?.data?.message || err.message || 'Gagal mengambil data';
-      setError(msg);
+      console.error("Failed to load items:", err);
+      setError(err.response?.data?.message || "Gagal mengambil data");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters, page]);
+  useEffect(() => { load(); }, [filters, page]);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-      <div className="lg:col-span-1">
-        <div className="p-4 bg-white rounded-lg shadow-sm">
-          <h4 className="text-lg font-semibold mb-4 text-gray-700">Filter</h4>
-          <FiltersPanel filters={filters} setFilters={setFilters} />
-        </div>
+    <div className="flex gap-6">
+      <div className="w-64 flex-shrink-0">
+        <FiltersPanel filters={filters} setFilters={setFilters} />
       </div>
 
-      <div className="lg:col-span-3">
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <input
-              value={filters.q}
-              onChange={e => { setPage(1); setFilters(f => ({ ...f, q: e.target.value })); }}
-              placeholder="Cari judul, penulis..."
-              className="input"
-            />
+      <div className="flex-1">
+        {/* Search */}
+        <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
+          <div className="flex gap-4 items-center">
+            <div className="flex-1 relative">
+              <svg className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="text"
+                value={filters.q}
+                onChange={e => {
+                  setPage(1);
+                  setFilters(f => ({ ...f, q: e.target.value }));
+                }}
+                className="w-full pl-10 pr-4 py-3 border rounded-lg"
+                placeholder="Cari judul, penulis..."
+              />
+            </div>
           </div>
-          <div className="text-sm text-gray-600">{total} hasil</div>
         </div>
 
-        {error ? (
-          <div className="mb-4 error-box">{error}</div>
-        ) : loading ? (
-          <div className="p-6 text-center">Loading...</div>
-        ) : items.length === 0 ? (
-          <div className="p-6 text-center text-gray-600">Tidak ada item.</div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {items.map(it => (
-              <ItemCard key={it.id ?? it._id ?? JSON.stringify(it)} item={it} />
+        {/* Error */}
+        {error && (
+          <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg mb-6">
+            <p className="text-red-700">{error}</p>
+          </div>
+        )}
+
+        {/* Loading */}
+        {loading && <div className="p-10 text-center">Memuat...</div>}
+
+        {/* Items */}
+        {!loading && !error && items.length === 0 && (
+          <div className="p-10 text-center text-gray-500">Tidak ada item ditemukan</div>
+        )}
+
+        {!loading && !error && items.length > 0 && (
+          <div className="space-y-4">
+            {items.map(item => (
+              <ItemCard key={item.id} item={item} />
             ))}
           </div>
         )}
 
-        <div className="mt-6 flex justify-center gap-2">
-          <button
-            disabled={page <= 1}
-            onClick={() => setPage(p => Math.max(1, p - 1))}
-            className="px-3 py-1 border rounded disabled:opacity-50"
-          >
-            Prev
-          </button>
-          <span className="px-3 py-1 border rounded">{page}</span>
-          <button
-            disabled={items.length === 0 || items.length < 12}
-            onClick={() => setPage(p => p + 1)}
-            className="px-3 py-1 border rounded disabled:opacity-50"
-          >
-            Next
-          </button>
-        </div>
+        {/* Pagination */}
+        {!loading && items.length > 0 && (
+          <div className="mt-8 flex items-center justify-center gap-3">
+            <button
+              disabled={page === 1}
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              className="px-4 py-2 border rounded disabled:opacity-40"
+            >
+              Prev
+            </button>
+
+            <span className="px-4 py-2 bg-blue-600 text-white rounded">
+              {page}
+            </span>
+
+            <button
+              disabled={items.length < 12}
+              onClick={() => setPage(p => p + 1)}
+              className="px-4 py-2 border rounded disabled:opacity-40"
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
