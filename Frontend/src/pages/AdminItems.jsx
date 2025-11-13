@@ -1,44 +1,52 @@
+// src/pages/AdminItems.jsx
 import React, { useEffect, useState } from 'react';
 import api from '../utils/api';
-import AddItemForm from './AddItemForm';
 
-export default function AdminItems(){
+export default function AdminItems() {
   const [items, setItems] = useState([]);
-  const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const load = async () => {
-    const res = await api.post('/items?limit=1000');
-    if (res.ok) setItems(res.data.items || []);
+  const loadItems = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await api.get('/book', { params: { limit: 1000 } });
+      const list = res?.data?.data;
+
+      if (!Array.isArray(list)) {
+        setItems([]);
+      } else {
+        setItems(list);
+      }
+
+    } catch (err) {
+      console.error("AdminItems load failed", err);
+      setError(err.response?.data?.message || 'Gagal memuat data');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { loadItems(); }, []);
 
-  const onAdded = (newItem) => {
-    setItems(prev => [newItem, ...prev]);
-    setShowForm(false);
-  };
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div className="p-4 bg-red-50 text-red-700 rounded">{error}</div>;
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold">Manajemen Barang</h2>
-        <button onClick={() => setShowForm(s => !s)} className="px-3 py-2 bg-indigo-600 text-white rounded">
-          {showForm ? 'Tutup' : 'Tambah Barang'}
-        </button>
-      </div>
-
-      {showForm && <AddItemForm onAdded={onAdded} />}
-
-      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-        {items.map(it => (
-          <div key={it._id} className="bg-white p-4 rounded shadow flex justify-between items-center">
-            <div>
-              <div className="font-semibold">{it.title}</div>
-              <div className="text-sm text-gray-500">{it.author} • {it.type} • {it.category}</div>
+      <h2 className="text-lg font-semibold mb-4">Manajemen Barang</h2>
+      <div className="grid gap-3">
+        {items.length === 0 ? (
+          <div>Tidak ada item.</div>
+        ) : (
+          items.map(item => (
+            <div key={item.id} className="p-3 border rounded bg-white">
+              <div className="font-semibold">{item.title}</div>
+              <div className="text-sm text-gray-500">{item.author}</div>
             </div>
-            <div className="text-sm text-gray-600">stok: {it.stock}</div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );

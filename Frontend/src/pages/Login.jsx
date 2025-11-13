@@ -34,44 +34,36 @@ export default function Login() {
   
     try {
       const res = await api.post('/user/login', formData);
-      // Struktur respon backend: { status, message, data: { ...user }, token }
       const body = res.data;
       const token = body?.token;
       const user = body?.data;
-  
-      // cek keberhasilan (backendmu pakai status "succes")
-      const ok = res.status >= 200 && res.status < 300 && body;
-      if (ok && token && user) {
-        // simpan token & user
-        localStorage.setItem('token', token);
-        localStorage.setItem('role', (user.role || 'USER')); // sesuaikan default
-        localStorage.setItem('currentUser', JSON.stringify(user));
-  
-        // redirect sesuai role (sesuaikan route-nya)
-        if ((user.role || '').toUpperCase() === 'ADMIN') {
-          navigate('/DashboardAdmin'); // atau '/admin' sesuai rute-mu
-        } else {
-          navigate('/DashboardUser'); // atau '/dashboard' sesuai rute-mu
-        }
-      } else {
-        // fallback pesan error dari backend
-        setError(body?.message || 'Login gagal');
-      }
-    } catch (err) {
-      console.error('Login error:', err);
-      // jika server memberikan pesan error, tampilkan
-      const serverMsg = err.response?.data?.message;
-      if (serverMsg) {
-        setError(serverMsg);
-      } else if (err.code === 'ERR_NETWORK' || err.message === 'Network Error') {
-        setError('Terjadi kesalahan jaringan / CORS. Periksa backend dan konfigurasi CORS.');
-      } else {
-        setError('Terjadi kesalahan. Silakan coba lagi.');
-      }
-    } finally {
-      setLoading(false);
+
+
+if (res.status >= 200 && res.status < 300 && token && user) {
+  localStorage.setItem('token', token);
+  localStorage.setItem('role', (user.role || 'USER').toString().toUpperCase());
+  localStorage.setItem('currentUser', JSON.stringify(user))
+  window.location.replace('/dashboard');
+
+  navigate('/dashboard', { replace: true });
+} else {
+  setError(body?.message || 'Login gagal');
+}
+
+  } catch (err) {
+    console.error('Login error:', err);
+    const serverMsg = err.response?.data?.message || err.response?.data?.error;
+    if (serverMsg) {
+      setError(serverMsg);
+    } else if (err.code === 'ERR_NETWORK' || err.message === 'Network Error') {
+      setError('Kesalahan jaringan: tidak dapat terhubung ke server. Periksa backend/CORS.');
+    } else {
+      setError('Terjadi kesalahan saat login.');
     }
-  };
+  } finally {
+    setLoading(false);
+  }
+};
   
   return (
 
@@ -81,7 +73,7 @@ export default function Login() {
         <div className="bg-white rounded-2xl shadow-xl p-8">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-600 rounded-full mb-4">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-900 rounded-full mb-4">
               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
               </svg>
@@ -89,7 +81,7 @@ export default function Login() {
             <h2 className="text-3xl font-bold text-gray-800">E-Library</h2>
             <p className="text-gray-500 mt-2">Masuk ke akun anda</p>
           </div>
-          {/* Error Message */}
+          {/* Pesan Error */}
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-sm text-red-600">{error}</p>
@@ -98,7 +90,7 @@ export default function Login() {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Email Input */}
+            {/* Email */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                 Email
@@ -115,14 +107,14 @@ export default function Login() {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition"
+                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-900 focus:border-transparent transition"
                   placeholder="nama@email.com"
                   required
                 />
               </div>
             </div>
 
-            {/* Password Input */}
+            {/* Password */}
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                 Password
@@ -139,7 +131,7 @@ export default function Login() {
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition"
+                  className="block w-full pl-10 pr-10 text-white py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-900 focus:border-transparent transition"
                   placeholder="••••••••"
                   required
                 />
@@ -162,29 +154,29 @@ export default function Login() {
               </div>
             </div>
 
-            {/* Remember Me & Forgot Password */}
+            {/* Ingat saya & Lupa password? */}
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <input
                   id="remember"
                   name="remember"
                   type="checkbox"
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-blue-900 focus:ring-blue-800 border-gray-300 rounded"
                 />
                 <label htmlFor="remember" className="ml-2 block text-sm text-gray-700">
                   Ingat saya
                 </label>
               </div>
-              <a href="#" className="text-sm text-indigo-600 hover:text-indigo-500">
+              <a href="#" className="text-sm text-blue-900 hover:text-blue-800">
                 Lupa password?
               </a>
             </div>
 
-            {/* Submit Button */}
+            {/* Tombol submit */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-900 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-900 disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
               {loading ? (
                 <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -197,10 +189,10 @@ export default function Login() {
             </button>
           </form>
 
-          {/* Register Link */}
+          {/* Daftar akun */}
           <div className="mt-6 text-center">
             <button onClick={() => navigate ('/register')}
-              className="text-blue-600 hover:text-blue-700 font-medium">
+              className="text-blue-900 hover:text-blue-800 font-medium">
               Daftar akun
               </button>
           </div>
