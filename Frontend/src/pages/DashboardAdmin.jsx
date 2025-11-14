@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Navbar from '../components/Navbar';
 import AdminItems from './AdminItems';
+import AddItemForm from './AddItemForm';
 //import BorrowRequests from './BorrowRequests';
 import ReturnApprovals from './ReturnApprovals';
 import Profile from './Profile';
@@ -23,6 +24,7 @@ export default function DashboardAdmin() {
           <Routes>
             <Route path="/" element={<Navigate to="book" replace />} />
             <Route path="book/*" element={<AdminItems />} />
+            <Route path="addItem" element={<AddItemForm />} />
             <Route path="returns" element={<ReturnApprovals />} />
             <Route path="profile" element={<Profile />} />
           </Routes>
