@@ -23,9 +23,7 @@ export default function Catalog() {
       });
 
       const res = await api.get('/book', { params });
-
-      // BACKEND format general:
-      // { data: { items: [...], total: X } }
+      
       const data = res?.data?.data;
       const list = data?.items ?? [];
       const count = data?.total ?? list.length;
