@@ -40,6 +40,7 @@ model Book {
   stock        Int       @default(1)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+  yearOfRelease Int
 
   genre        Genre     @relation(fields: [genreId], references: [id])
   borrows      Borrow[]
