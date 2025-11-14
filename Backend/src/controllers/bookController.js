@@ -1,11 +1,11 @@
 import prisma from "../config/prismaConfig.js";
 
 export const createBook = async (req, res) => {
-  const { title, author, description, coverUrl, type, genreId, stock } =
+  const { title, author, description, coverUrl, type, genreId, stock, year } =
     req.body;
 
   try {
-    if (!title || !author || !type || !genreId) {
+    if (!title || !author || !type || !genreId || !year) {
       return res.status(401).json({ message: "field wajib diisi" });
     }
 
@@ -16,8 +16,9 @@ export const createBook = async (req, res) => {
         description,
         coverUrl,
         type,
+        yearOfRelease : Number(year),
         genreId: Number(genreId),
-        stock: stock ? Number(stock) : 1,
+        stock: stock ? Number(stock) : 1
       },
     });
     res.status(200).json({
