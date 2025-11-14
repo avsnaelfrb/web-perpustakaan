@@ -14,6 +14,6 @@ route.post("/", verifyToken, isAdmin, createBook);
 route.get("/", getAllBook);
 route.get("/:id", getBookById);
 route.put("/:id", verifyToken, isAdmin, UpdateBook);
-route.delete("/:id", deleteBook);
+route.delete("/:id",verifyToken, isAdmin, deleteBook);
 
 export default route;
