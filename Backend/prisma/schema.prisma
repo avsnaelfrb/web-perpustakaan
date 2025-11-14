@@ -34,7 +34,7 @@ model Book {
   title        String
   author       String
   description  String?
-  coverUrl     String?
+  cover        String?
   type         BookType  
   genreId      Int
   stock        Int       @default(1)
