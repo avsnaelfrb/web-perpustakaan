@@ -2,11 +2,11 @@ import prisma from "../config/prismaConfig.js";
 
 export const borrowBook = async (req, res) => {
   try {
-    const { bookId } = req.body;
-    const { userId } = req.user.id;
+    const { bookId } = req.params;
+    const { userId } = req.body;
 
     const book = await prisma.book.findUnique({
-      where: { id: Number(bookId) },
+      where: { id: parseInt(bookId) },
     });
     if (!book) {
       return res.status(401).json({ message: "buku tidak ditemukan" });
@@ -16,7 +16,7 @@ export const borrowBook = async (req, res) => {
     }
 
     await prisma.book.update({
-      where: { id: Number(bookId) },
+      where: { id: parseInt(bookId) },
       data: { stock: { decrement: 1 } },
     });
 
@@ -33,12 +33,14 @@ export const borrowBook = async (req, res) => {
       },
     });
 
+    
     res.status(200).json({
       status: "succes",
       message: "berhasil meminjam buku",
       data: borrow,
     });
   } catch (error) {
+    console.log(error)
     res.status(500).json({ status: "error", message: error.message });
   }
 };
