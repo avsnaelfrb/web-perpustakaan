@@ -8,7 +8,12 @@ import ReturnApprovals from './ReturnApprovals';
 import Profile from './Profile';
 
 export default function DashboardAdmin() {
-  const role = localStorage.getItem('role') || 'admin';
+  const role = (localStorage.getItem('role') || 'ADMIN').toUpperCase();
+
+  if (role !== 'ADMIN') {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar role={role} />
@@ -16,8 +21,8 @@ export default function DashboardAdmin() {
         <Navbar title="Dashboard Admin" />
         <main className="p-6">
           <Routes>
-            <Route path="/" element={<Navigate to="items" replace />} />
-            <Route path="items" element={<AdminItems />} />
+            <Route path="/" element={<Navigate to="book" replace />} />
+            <Route path="book/*" element={<AdminItems />} />
             <Route path="returns" element={<ReturnApprovals />} />
             <Route path="profile" element={<Profile />} />
           </Routes>
@@ -26,3 +31,4 @@ export default function DashboardAdmin() {
     </div>
   );
 }
+
