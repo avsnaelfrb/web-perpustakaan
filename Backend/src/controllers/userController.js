@@ -55,8 +55,6 @@ export const login = async(req, res) => {
         const secret = process.env.JWT_SECRET
         const token = jwt.sign(payload, secret, {expiresIn: "1d"})
 
-        console.log(user.password);
-        
         if(!user){
             return res.status(401).json({ message: "user tidak ditemukan" })
         }
