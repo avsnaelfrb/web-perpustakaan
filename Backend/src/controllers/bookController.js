@@ -1,7 +1,7 @@
 import prisma from "../config/prismaConfig.js";
 
 export const createBook = async (req, res) => {
-  const { title, author, description, coverUrl, type, genreId, stock, year } =
+  const { title, author, description, type, genreId, stock, year } =
     req.body;
 
   try {
@@ -9,16 +9,23 @@ export const createBook = async (req, res) => {
       return res.status(401).json({ message: "field wajib diisi" });
     }
 
+    const cover = req.file
+      ? `/uploads/thumbnails/${req.file.filename}`
+      : null;
+    if (!cover) {
+      return res.json({ message: "cover harus diisi" });
+    }
+
     const newBook = await prisma.book.create({
       data: {
         title,
         author,
         description,
-        coverUrl,
+        cover,
         type,
-        yearOfRelease : Number(year),
+        yearOfRelease: Number(year),
         genreId: Number(genreId),
-        stock: stock ? Number(stock) : 1
+        stock: stock ? Number(stock) : 1,
       },
     });
     res.status(200).json({
@@ -27,6 +34,7 @@ export const createBook = async (req, res) => {
       status: "succes",
     });
   } catch (error) {
+    console.error("Error menambahkan movie:", error);
     res.status(500).json({ message: error.message, status: "error" });
   }
 };
@@ -66,7 +74,7 @@ export const getAllBook = async (req, res) => {
   }
 };
 
-export const getBookById = async (req, res) => {  
+export const getBookById = async (req, res) => {
   try {
     const { id } = req.params;
     const book = await prisma.book.findUnique({
@@ -90,7 +98,7 @@ export const getBookById = async (req, res) => {
 
 export const UpdateBook = async (req, res) => {
   const { id } = req.params;
-  const { title, author, description, coverUrl, type, genreId, stock } =
+  const { title, author, description, type, genreId, stock } =
     req.body;
 
   try {
@@ -99,6 +107,9 @@ export const UpdateBook = async (req, res) => {
         id: Number(id),
       },
     });
+
+    const cover = req.file ? `/uploads/thumbnails/${req.file.filename}` : null;
+
     if (!book) {
       return res.status(400).json({
         message: "Buku tidak ditemukan",
@@ -111,10 +122,10 @@ export const UpdateBook = async (req, res) => {
         title,
         author,
         description,
-        coverUrl,
         type,
         genreId: Number(genreId),
         stock: stock ? Number(stock) : 1,
+        cover,
       },
     });
     res.status(200).json({
