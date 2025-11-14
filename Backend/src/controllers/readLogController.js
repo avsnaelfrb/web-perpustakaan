@@ -2,7 +2,7 @@ import prisma from "../config/prismaConfig.js";
 
 export const logRead = async (req, res) => {
   try {
-    const { bookId } = req.body;
+    const { bookId } = req.params;
     const userId = req.user.id;
 
     const book = await prisma.book.findUnique({
@@ -12,13 +12,14 @@ export const logRead = async (req, res) => {
       return res.status(404).json({ message: "Buku tidak ditemukan." });
 
     const read = await prisma.readLog.create({
-      data: { userId, bookId, readAt: new Date() },
+      data: { userId, bookId : Number(bookId), readAt: new Date() },
     });
 
     res
       .status(201)
       .json({ message: "Aktivitas membaca tercatat.", data: read });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ message: error.message });
   }
 };
