@@ -6,7 +6,7 @@ export const createBook = async (req, res) => {
 
   try {
     if (!title || !author || !type || !genreId || !year) {
-      return res.status(401).json({ message: "field wajib diisi" });
+      return res.status(400).json({ message: "field wajib diisi" });
     }
 
     const cover = req.file
@@ -111,7 +111,7 @@ export const UpdateBook = async (req, res) => {
     const cover = req.file ? `/uploads/thumbnails/${req.file.filename}` : null;
 
     if (!book) {
-      return res.status(400).json({
+      return res.status(404).json({
         message: "Buku tidak ditemukan",
         status: "error",
       });

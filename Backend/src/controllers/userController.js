@@ -15,7 +15,7 @@ export default async function register(req, res){
         })
 
         if(existUser) {
-            return res.status(401).json({ message: "email sudah terdaftar" })
+            return res.status(400).json({ message: "email sudah terdaftar" })
         }
 
         const salt = await bcrypt.genSalt(10)
@@ -56,11 +56,11 @@ export const login = async(req, res) => {
         const token = jwt.sign(payload, secret, {expiresIn: "1d"})
 
         if(!user){
-            return res.status(401).json({ message: "user tidak ditemukan" })
+            return res.status(404).json({ message: "user tidak ditemukan" })
         }
 
         if(!passwordMatch){
-            return res.status(402).json({ message: "Password salah" })
+            return res.status(404).json({ message: "Password salah" })
         }
 
         res.status(200).json({ 

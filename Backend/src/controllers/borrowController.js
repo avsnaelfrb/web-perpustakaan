@@ -10,11 +10,11 @@ export const borrowBook = async (req, res) => {
      })
 
     if (!book) {
-      return res.status(401).json({ message: "buku tidak ditemukan" });
+      return res.status(404).json({ message: "buku tidak ditemukan" });
     }
 
     if (book.stock <= 0) {
-      return res.status(402).json({ message: "stock buku habis" });
+      return res.status(400).json({ message: "stock buku habis" });
     }
 
     await prisma.book.update({
@@ -55,7 +55,7 @@ export const returnBook = async (req, res) => {
     });
     if (!borrow) {
       return res
-        .status(401)
+        .status(404)
         .json({ message: "data peminjaman tidak ditemukan" });
     }
 

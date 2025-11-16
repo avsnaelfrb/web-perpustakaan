@@ -3,12 +3,12 @@ import prisma from "../config/prismaConfig.js";
 export const createGenre = async (req, res) => {
   try {
     const { name } = req.body;
-    !name && res.status(401).json({ message: "nama genre harus diisi" });
+    !name && res.status(400).json({ message: "nama genre harus diisi" });
 
     const existGenre = await prisma.genre.findUnique({
       where: { name },
     });
-    existGenre && res.status(401).json({ message: "genre sudah ada" });
+    existGenre && res.status(400).json({ message: "genre sudah ada" });
 
     const newGenre = await prisma.genre.create({
       data: { name },

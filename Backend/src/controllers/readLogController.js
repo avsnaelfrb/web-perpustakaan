@@ -16,7 +16,7 @@ export const logRead = async (req, res) => {
     });
 
     res
-      .status(201)
+      .status(200)
       .json({ message: "Aktivitas membaca tercatat.", data: read });
   } catch (error) {
     console.log(error);
