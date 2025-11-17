@@ -1,85 +1,70 @@
 import prisma from "../config/prismaConfig.js";
-import bcrypt from "bcryptjs"
-import jwt from "jsonwebtoken"
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import catchAsync from "../utils/catchAsync.js";
+import AppError from "../utils/appError.js";
 
-export default async function register(req, res){
-    const { name, email, password, nim } = req.body;
+export const register = catchAsync(async (req, res, next) => {
+  const { name, email, password, nim } = req.body;
 
-    if(!name || !email || !password || !nim) {
-        return res.status(400).json({ message: "harap isi seluruh field" })
-    }
+  if (!name || !email || !password || !nim) {
+    return next(new AppError("Harap isi seluruh field", 400));
+  }
 
-    try {
-        const existUser = await prisma.user.findUnique({
-            where : { email }
-        })
+  const existUser = await prisma.user.findUnique({
+    where: { email },
+  });
 
-        if(existUser) {
-            return res.status(401).json({ message: "email sudah terdaftar" })
-        }
+  if (existUser) {
+    return next(new AppError("Email sudah terdaftar", 400));
+  }
 
-        const salt = await bcrypt.genSalt(10)
-        const hashedPassword = await bcrypt.hash(password, salt)
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(password, salt);
 
-        const newUser = await prisma.user.create({
-            data : {
-                name,
-                email,
-                password: hashedPassword,
-                nim,
-            }
-        }) 
-        res.status(200).json({
-            message: "Berhasil menambahkan user!",
-            data : { newUser },
-            status : "succes"
-        })
-    } catch (error) {
-        res.status(500).json({
-            message: error.message,
-            status : "error"
-        })
-    }
-    return;
-} 
+  const newUser = await prisma.user.create({
+    data: {
+      name,
+      email,
+      password: hashedPassword,
+      nim,
+    },
+  });
+  res.status(200).json({
+    status: "succes",
+    message: "Berhasil menambahkan user",
+    data: newUser,
+  });
+});
 
-export const login = async(req, res) => {
-    const { email, password } = req.body;
+export const login = catchAsync(async (req, res, next) => {
+  const { email, password } = req.body;
 
-    try {
-        const user = await prisma.user.findUnique({
-            where : { email }
-        });
-        const passwordMatch = await bcrypt.compare(password, user.password);
-        const payload = {id: user.id, role: user.role};
-        const secret = process.env.JWT_SECRET
-        const token = jwt.sign(payload, secret, {expiresIn: "1d"})
+  const user = await prisma.user.findUnique({
+    where: { email },
+  });
+  const passwordMatch = await bcrypt.compare(password, user.password);
+  const payload = { id: user.id, role: user.role };
+  const secret = process.env.JWT_SECRET;
+  const token = jwt.sign(payload, secret, { expiresIn: "1d" });
 
-        console.log(user.password);
-        
-        if(!user){
-            return res.status(401).json({ message: "user tidak ditemukan" })
-        }
+  if (!user) {
+    return next(new AppError("User tidak ditemukan", 404))
+  }
 
-        if(!passwordMatch){
-            return res.status(402).json({ message: "Password salah" })
-        }
+  if (!passwordMatch) {
+    return next(AppError("Password", 404))
+  }
 
-        res.status(200).json({ 
-            status: "succes",
-            message: "berhasil login",
-            data: {
-                id : user.id,
-                name : user.name,
-                email,
-                role : user.role
-            },
-            token 
-        })
-    } catch (error) {
-        res.status(500).json({
-            status: "error", 
-            message: error.message
-        })
-    }
-}
+  res.status(200).json({
+    status: "succes",
+    message: "berhasil login",
+    data: {
+      id: user.id,
+      name: user.name,
+      email,
+      role: user.role,
+    },
+    token,
+  });
+});
