@@ -9,6 +9,29 @@ export default function Barang() {
   const [filterCategory, setFilterCategory] = useState('');
   const [sortBy, setSortBy] = useState('title'); 
 
+
+  // di atas component atau dalam file
+// helper untuk convert cover field menjadi URL yang bisa diakses browser
+const coverBuku = (cover) => {
+  if (!cover) return null;
+  // kalau sudah full URL
+  if (/^https?:\/\//i.test(cover)) return cover;
+
+  // jika value dimulai dengan '/uploads' -> gabungkan dengan origin (http://localhost:5000)
+  if (cover.startsWith('/uploads')) {
+    // gunakan window.location.origin untuk domain yang dipakai browser ke frontend
+    // tapi backend mungkin di port berbeda -> ganti origin jika backend di host lain
+    const backendOrigin = window.__BACKEND_ORIGIN__ || (window.location.hostname === 'localhost' ? 'http://localhost:5000' : window.location.origin);
+    return `${backendOrigin}${cover}`;
+  }
+
+  // jika value tanpa leading slash, tambahkan
+  const backendOrigin = window.__BACKEND_ORIGIN__ || (window.location.hostname === 'localhost' ? 'http://localhost:5000' : window.location.origin);
+  return `${backendOrigin}/${cover.startsWith('/') ? cover.slice(1) : cover}`;
+};
+
+
+
   const loadItems = async () => {
     setLoading(true);
     setError('');
@@ -160,7 +183,7 @@ const categories = [...new Set(items.map(b => b.type).filter(Boolean))];
                 placeholder="Cari judul atau penulis..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                className="w-full text-white pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
               />
             </div>
           </div>
@@ -169,7 +192,7 @@ const categories = [...new Set(items.map(b => b.type).filter(Boolean))];
           <select
             value={filterCategory}
             onChange={(e) => setFilterCategory(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+            className="px-4 text-white py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
           >
             <option value="">Semua Kategori</option>
             {categories.map(cat => (
@@ -181,7 +204,7 @@ const categories = [...new Set(items.map(b => b.type).filter(Boolean))];
           <select
   value={sortBy}
   onChange={(e) => setSortBy(e.target.value)}
-  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+  className="px-4 text-white py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
 >
   <option value="title">Urutkan: Judul</option>
   <option value="author">Urutkan: Penulis</option>
@@ -247,9 +270,30 @@ const categories = [...new Set(items.map(b => b.type).filter(Boolean))];
       </td>
       <td className="px-6 py-4">
         <div className="flex items-center">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-purple-100 rounded flex items-center justify-center text-lg flex-shrink-0">
-            📚
-          </div>
+        <div className="w-12 h-12 rounded flex items-center justify-center flex-shrink-0 overflow-hidden bg-gray-100">
+  {item.cover ? (
+    (() => {
+      const src = coverBuku(item.cover);
+      console.log('Render cover for id', item.id, '->', item.cover, '->', src);
+      return (
+        <img
+          src={src}
+          alt={item.title}
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.style.display = 'none';
+            const p = e.currentTarget.parentNode;
+            if (p) p.innerHTML = '📚';
+          }}
+        />
+      );
+    })()
+  ) : (
+    <div className="text-lg">📚</div>
+  )}
+</div>
+
           <div className="ml-4">
             <div className="text-sm font-medium text-gray-900">
               {item.title}

@@ -1,22 +1,35 @@
+// src/components/ItemCard.jsx
 import React from 'react';
 
 export default function ItemCard({ item }) {
+  // item.coverUrl sudah disiapkan di Katalog.jsx
+  const cover = item.cover;
+
   return (
-    <div className="bg-white p-4 rounded shadow flex gap-4">
-      <div className="w-20 h-28 bg-gray-100 rounded flex-shrink-0" />
+    <div className="flex gap-4 p-4 bg-white rounded-lg shadow-sm">
+      <div className="w-20 h-28 flex-shrink-0 rounded overflow-hidden bg-gray-100">
+        {cover ? (
+          <img
+            src={cover}
+            alt={item.title}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              // fallback: jika tidak ada thumbnail, coba /uploads/covers or placeholder
+              e.currentTarget.src = cover.includes('/thumbnails/')
+                ? cover.replace('/thumbnails/', '/covers/')
+                : '/uploads/placeholder-book.png';
+            }}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-gray-400">No image</div>
+        )}
+      </div>
+
       <div className="flex-1">
-        <h3 className="font-semibold text-gray-800">{item.title ?? item.name ?? 'Untitled'}</h3>
-        <p className="text-sm text-gray-500">{item.author ?? item.writer ?? '—'} • {item.year ?? '—'}</p>
-        <p className="text-sm mt-2 text-gray-600">{item.category ?? '—'} • {item.type ?? '—'}</p>
-        <div className="mt-3 flex items-center gap-2">
-          <span className="text-sm px-2 py-1 border rounded text-gray-700">{item.stock ?? 0} stok</span>
-          <button
-            className="ml-auto btn-brand text-sm"
-            disabled={!(item.stock > 0)}
-          >
-            Pinjam
-          </button>
-        </div>
+        <div className="font-semibold text-gray-900">{item.title}</div>
+        <div className="text-sm text-gray-500">{item.author}</div>
+        <div className="text-sm text-gray-600 mt-2 line-clamp-3">{item.description || '-'}</div>
       </div>
     </div>
   );
