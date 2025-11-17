@@ -4,13 +4,11 @@ import AppError from "../utils/appError.js";
 
 export const createGenre = catchAsync(async (req, res, next) => {
   const { name } = req.body;
-  if (!name) {
-    return next(new AppError("Nama genre harus diisi", 400));
-  }
 
   const existGenre = await prisma.genre.findUnique({
     where: { name },
   });
+
   if (existGenre) {
     return next(new AppError("Genre sudah ada", 400));
   }
@@ -18,9 +16,10 @@ export const createGenre = catchAsync(async (req, res, next) => {
   const newGenre = await prisma.genre.create({
     data: { name },
   });
+
   res.status(201).json({
     status: "success",
-    message: "genre berhasil ditambahkan",
+    message: "Genre berhasil ditambahkan",
     data: newGenre,
   });
 });
@@ -30,9 +29,10 @@ export const getAll = catchAsync(async (req, res, next) => {
     include: { books: true },
     orderBy: { name: "asc" },
   });
+
   res.status(200).json({
-    status: "succes",
-    message: "berhasil mengambil semua genre",
+    status: "success",
+    message: "Berhasil mengambil semua genre",
     data: getAll,
   });
 });
@@ -41,18 +41,19 @@ export const getById = catchAsync(async (req, res, next) => {
   const { id } = req.params;
 
   const genreId = await prisma.genre.findUnique({
-    where: { id: Number(id) },
+    where: { id },
     include: { books: true },
   });
 
   if (!genreId) {
     return next(
-      new AppError(`tidak dapat menemukan genre dengan id ${id}`, 404)
+      new AppError(`Tidak dapat menemukan genre dengan id ${id}`, 404)
     );
   }
+
   res.status(200).json({
     status: "success",
-    message: "berhasil mengambil data genre",
+    message: "Berhasil mengambil data genre",
     data: genreId,
   });
 });
@@ -61,36 +62,51 @@ export const updateGenre = catchAsync(async (req, res, next) => {
   const { id } = req.params;
   const { name } = req.body;
 
-  const dataToUpdate = {};
+  const genreExist = await prisma.genre.findUnique({
+    where: { id },
+  });
 
-  if (name) {
-    dataToUpdate.name = name;
+  if (!genreExist) {
+    return next(new AppError("Genre tidak ditemukan", 404));
+  }
+
+  if (name && name !== genreExist.name) {
+    const nameTaken = await prisma.genre.findUnique({ where: { name } });
+    if (nameTaken) {
+      return next(new AppError("Nama genre sudah digunakan"));
+    }
   }
 
   const updatedGenre = await prisma.genre.update({
-    where: { id: Number(id) },
-    data: dataToUpdate,
+    where: { id },
+    data: { name },
   });
+
   res.status(200).json({
     status: "success",
-    message: "berhasil mengupdate genre",
+    message: "Berhasil mengupdate genre",
     data: updatedGenre,
   });
 });
 
-export const deleteGenre = catchAsync( async (req, res, next) => {
-    const { id } = req.params;
+export const deleteGenre = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
 
-    const delGenre = await prisma.genre.delete({
-      where: { id: Number(id) },
-    });
-    if (!delGenre) {
-      return next( new AppError("Genre tidak ditemukan", 404) )
-    }
+  const checkGenre = await prisma.genre.findUnique({
+    where: { id },
+  });
 
-    res.status(200).json({
-      status: "succes",
-      message: "berhasil menghapus genre",
-      data: delGenre,
-    });
+  if (!checkGenre) {
+    return next(new AppError("Genre tidak ditemukan", 404));
+  }
+
+  const delGenre = await prisma.genre.delete({
+    where: { id: Number(id) },
+  });
+
+  res.status(200).json({
+    status: "success",
+    message: "Berhasil menghapus genre",
+    data: delGenre,
+  });
 });
