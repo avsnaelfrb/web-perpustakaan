@@ -47,7 +47,7 @@ if (res.status >= 200 && res.status < 300 && token && user) {
 
   navigate('/dashboard', { replace: true });
 } else {
-  setError(body?.message || 'Login gagal');
+  setError(body?.message || 'Login gagal, silahkan coba lagi');
 }
 
   } catch (err) {
