@@ -4,43 +4,88 @@ import api from '../utils/api';
 export default function Profile(){
   const [profile, setProfile] = useState(null);
   const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
   useEffect(() => {
-    (async () => {
-      const res = await api.post('/me');
-      if (res.ok) setProfile(res.data);
-      const h = await api.post('/my-borrows');
-      if (h.ok) setHistory(h.data || []);
-    })();
+    const loadProfile = async () => {
+      try {
+        setLoading(true);
+        
+        const userData = JSON.parse(localStorage.getItem('currentUser'));
+        if (userData) {
+          setProfile(userData);
+        }
+
+      } catch (err) {
+        console.error('Failed to load profile:', err);
+        setError('Gagal memuat profil');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProfile();
   }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-20">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+        <p className="text-red-700">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-3xl">
-      <div className="bg-white p-6 rounded shadow mb-6">
-        <h2 className="text-xl font-semibold">Profil</h2>
-        <p className="mt-2 text-gray-600">Nama: {profile?.name}</p>
-        <p className="text-gray-600">Email: {profile?.email}</p>
-        <p className="text-gray-600">NIM: {profile?.nim}</p>
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">Profil</h2>
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <span className="text-gray-600 font-medium w-20">Nama:</span>
+            <span className="text-gray-800">{profile?.name || '-'}</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-gray-600 font-medium w-20">Email:</span>
+            <span className="text-gray-800">{profile?.email || '-'}</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-gray-600 font-medium w-20">Role:</span>
+            <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+              profile?.role === 'ADMIN' 
+                ? 'bg-purple-100 text-purple-700' 
+                : 'bg-blue-100 text-blue-700'
+            }`}>
+              {profile?.role || 'USER'}
+            </span>
+          </div>
+        </div>
       </div>
 
-      <div className="bg-white p-6 rounded shadow">
-        <h3 className="font-semibold mb-3">Riwayat Peminjaman</h3>
-        {history.length === 0 ? <p className="text-gray-500">Belum ada riwayat</p> :
-          <table className="w-full text-sm">
-            <thead className="text-left text-gray-600">
-              <tr><th>Item</th><th>Tgl Pinjam</th><th>Tgl Kembali</th><th>Status</th></tr>
-            </thead>
-            <tbody>
-              {history.map(h => (
-                <tr key={h._id} className="border-t">
-                  <td>{h.itemTitle}</td>
-                  <td>{new Date(h.borrowedAt).toLocaleDateString()}</td>
-                  <td>{h.returnedAt ? new Date(h.returnedAt).toLocaleDateString() : '-'}</td>
-                  <td>{h.status}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        }
+      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <h2 className="text-xl font-bold text-gray-800 mb-4">Riwayat Peminjaman</h2>
+        {history.length === 0 ? (
+          <p className="text-gray-500 text-center py-8">Belum ada riwayat</p>
+        ) : (
+          <div className="space-y-3">
+            {history.map((item, idx) => (
+              <div key={idx} className="p-4 border border-gray-200 rounded-lg">
+                <p className="font-semibold">{item.bookTitle}</p>
+                <p className="text-sm text-gray-600">
+                  {item.borrowDate} - {item.returnDate || 'Belum dikembalikan'}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
