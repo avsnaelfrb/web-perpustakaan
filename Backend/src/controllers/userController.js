@@ -43,18 +43,19 @@ export const login = catchAsync(async (req, res, next) => {
   const user = await prisma.user.findUnique({
     where: { email },
   });
-  const passwordMatch = await bcrypt.compare(password, user.password);
-  const payload = { id: user.id, role: user.role };
-  const secret = process.env.JWT_SECRET;
-  const token = jwt.sign(payload, secret, { expiresIn: "1d" });
-
+  
   if (!user) {
     return next(new AppError("User tidak ditemukan", 404))
   }
-
+  
+  const passwordMatch = await bcrypt.compare(password, user.password);
   if (!passwordMatch) {
     return next(AppError("Password", 404))
   }
+  
+  const payload = { id: user.id, role: user.role };
+  const secret = process.env.JWT_SECRET;
+  const token = jwt.sign(payload, secret, { expiresIn: "1d" });
 
   res.status(200).json({
     status: "succes",
@@ -64,6 +65,7 @@ export const login = catchAsync(async (req, res, next) => {
       name: user.name,
       email,
       role: user.role,
+      nim: user.nim
     },
     token,
   });
