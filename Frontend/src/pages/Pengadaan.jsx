@@ -123,7 +123,7 @@ export default function Pengadaan({ onAdded }) {
         coverText: form.cover ? form.cover : null
       });
 
-      // IMPORTANT: do NOT set Content-Type header manually — let browser/axios set the boundary.
+      
       const res = await api.post('/book', formData, {
         headers: {
           // 'Content-Type' will be set automatically

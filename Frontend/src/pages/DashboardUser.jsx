@@ -3,7 +3,7 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Navbar from '../components/Navbar';
-import Catalog from './Catalog';
+import Katalog from './Katalog';
 import Profile from './Profile';
 
 export default function DashboardUser() {
@@ -20,8 +20,8 @@ export default function DashboardUser() {
         <Navbar title="Dashboard User" />
         <main className="p-6">
           <Routes>
-            <Route path="/" element={<Navigate to="catalog" replace />} />
-            <Route path="catalog/*" element={<Catalog />} />
+            <Route path="/" element={<Navigate to="katalog" replace />} />
+            <Route path="katalog/*" element={<Katalog />} />
             <Route path="profile" element={<Profile />} />
           </Routes>
         </main>

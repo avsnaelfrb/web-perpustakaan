@@ -1,9 +1,10 @@
+// src/pages/Katalog.jsx
 import React, { useEffect, useState } from 'react';
 import api from '../utils/api';
 import ItemCard from '../components/ItemCard';
 import FiltersPanel from '../components/FiltersPanel';
 
-export default function Catalog() {
+export default function Katalog() {
   const [items, setItems] = useState([]);
   const [filters, setFilters] = useState({ q: '', author: '', category:'', genre:'', year:'', type:'' });
   const [loading, setLoading] = useState(false);
@@ -11,24 +12,49 @@ export default function Catalog() {
   const [total, setTotal] = useState(0);
   const [error, setError] = useState('');
 
+  // Helper: ambil origin backend dari api.defaults.baseURL
+  const getBackendOrigin = () => {
+    const base = api?.defaults?.baseURL || '';
+    if (!base) return 'http://localhost:5000';
+    return base.replace(/\/api\/?$/, '');
+  };
+  const backendOrigin = getBackendOrigin();
+
+  const coverBuku = (cover) => {
+    if (!cover) return null;
+    if (/^https?:\/\//.test(cover)) return cover;
+    // jika cover mulai dengan '/', gabungkan origin
+    if (cover.startsWith('/')) return `${backendOrigin}${cover}`;
+    return `${backendOrigin}/${cover}`;
+  };
+
   const load = async () => {
     setLoading(true);
     setError('');
 
     try {
       const params = { page, limit: 12 };
-
       Object.entries(filters).forEach(([key, val]) => {
         if (String(val).trim() !== '') params[key] = val;
       });
 
       const res = await api.get('/book', { params });
-      
-      const data = res?.data?.data;
-      const list = data?.items ?? [];
-      const count = data?.total ?? list.length;
 
-      setItems(list);
+      const resData = res?.data?.data ?? res?.data ?? [];
+      const list = Array.isArray(resData) ? resData : (resData.items ?? []);
+      const count = Array.isArray(resData) ? list.length : (resData.total ?? list.length);
+
+
+      const normalized = list.map(b => {
+        const coverField = b.cover ?? ''; 
+        const coverUrl = coverBuku(coverField);
+        return {
+          ...b,
+          coverUrl,
+        };
+      });
+
+      setItems(normalized);
       setTotal(count);
 
     } catch (err) {
