@@ -7,7 +7,7 @@ export const borrowBook = catchAsync(async (req, res, next) => {
   const userId = req.user.id;
 
   const book = await prisma.book.findUnique({
-    where: { id: parseInt(bookId) },
+    where: { id: bookId },
   });
 
   if (!book) {
@@ -18,26 +18,33 @@ export const borrowBook = catchAsync(async (req, res, next) => {
     return next(new AppError("Stock buku habis", 400));
   }
 
-  await prisma.book.update({
-    where: { id: Number(bookId) },
-    data: { stock: { decrement: 1 } },
+  const existingBorrow = await prisma.borrow.findFirst({
+    where: {
+      userId: userId,
+      bookId: bookId,
+      status: "BORROWED"
+    }
   });
 
-  const borrow = await prisma.borrow.create({
-    data: {
-      userId,
-      bookId: Number(bookId),
-      borrowDate: new Date(),
-    },
-  });
+  if (existingBorrow) {
+    return next(new AppError('Anda sedang meminjam buku ini. Harap kembalikan terlebih dahulu', 400))
+  }
 
-  await prisma.borrow.update({
-    where: { id: Number(borrow.id) },
-    data: { status: "BORROWED" },
-  });
+  const activeBorrowCount = await prisma.borrow.count({
+    where: {
+      userId: userId,
+      status: "BORROWED"
+    }
+  })
+
+  if (activeBorrowCount >= 3) {
+    return next(new AppError('Anda telah mencapai batas peminjaman (maksimal 3 buku)', 400))
+  }
+
+
 
   res.status(200).json({
-    status: "succes",
+    status: "success",
     message: "berhasil meminjam buku",
     data: borrow,
   });
