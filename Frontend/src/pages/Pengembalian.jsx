@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../utils/api';
 
-export default function ReturnApprovals(){
+export default function Pengembalian(){
   const [returns, setReturns] = useState([]);
   const load = async () => {
     const res = await api.post('/return-requests');
