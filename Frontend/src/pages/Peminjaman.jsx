@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../utils/api';
 
-export default function BorrowRequests(){
+export default function Peminjaman(){
   const [requests, setRequests] = useState([]);
 
   const load = async () => {
