@@ -91,9 +91,9 @@ export const UpdateBook = catchAsync(async (req, res, next) => {
     author,
     description,
     type,
-    genreId,
-    stock,
-    yearOfRelease: year,
+    genreId : genreId ? Number(genreId) : undefined,
+    stock : stock ? Number(stock) : undefined,
+    yearOfRelease: year ? Number(year) : undefined,
   };
 
   if (req.file) {
@@ -126,7 +126,7 @@ export const deleteBook = catchAsync(async (req, res, next) => {
     where: { id: Number(id) },
   });
   res.status(200).json({
-    status: "succes",
+    status: "success",
     message: `Berhasil menghapus data buku dengan id ${id}`,
     data: delBook,
   });
