@@ -10,7 +10,7 @@ export const registerRules = [
   body("password")
     .isLength({ min: 6 })
     .withMessage("Password minimal 6 karakter"),
-  body("nim").notEmpty().withMessage("NIM wajib diisi").trim().escape(),
+  body("nim").notEmpty().withMessage("NIM wajib diisi").isInt().withMessage('NIM harus berupa angka').trim().escape().toInt(),
 ];
 
 export const loginRules = [
