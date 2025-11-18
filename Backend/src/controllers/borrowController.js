@@ -2,6 +2,8 @@ import prisma from "../config/prismaConfig.js";
 import AppError from "../utils/appError.js";
 import catchAsync from "../utils/catchAsync.js";
 
+const BORROW_DURATION_DAYS = 7;
+
 export const borrowBook = catchAsync(async (req, res, next) => {
   const { bookId } = req.params;
   const userId = req.user.id;
@@ -41,12 +43,33 @@ export const borrowBook = catchAsync(async (req, res, next) => {
     return next(new AppError('Anda telah mencapai batas peminjaman (maksimal 3 buku)', 400))
   }
 
+  const now = new Date();
+  const dueDate = new Date(now);
+  dueDate.setDate(dueDate.getDate() + BORROW_DURATION_DAYS);
 
+  const result = await prisma.$transaction(async (tx) => {
+    await tx.book.update({
+      where: { id: bookId },
+      data: { stock: {decrement: 1} },
+    });
 
-  res.status(200).json({
+    const newBorrow = await tx.borrow.create({
+      data: {
+        userId,
+        bookId,
+        borrowDate: now,
+        dueDate: dueDate,
+        status: "BORROWED"
+      }
+    })
+
+    return newBorrow;
+  })
+
+  res.status(201).json({
     status: "success",
     message: "berhasil meminjam buku",
-    data: borrow,
+    data: result,
   });
 });
 
@@ -56,30 +79,48 @@ export const returnBook = catchAsync(async (req, res, next) => {
   const borrow = await prisma.borrow.findUnique({
     where: { id: Number(borrowId) },
   });
+
   if (!borrow) {
     return next(new AppError("Data peminjaman tidak ditemukan", 404));
   }
 
-  await prisma.borrow.update({
-    where: { id: Number(borrowId) },
-    data: { status: "RETURNED" },
-  });
+  if (borrow.status == "RETURNED") {
+    return next(new AppError('Sudah dikembalikan', 400))
+  }
 
-  await prisma.book.update({
-    where: { id: borrow.bookId },
-    data: { stock: { increment: 1 } },
-  });
+  const returnDate = new Date();
+  const isOverDue = returnDate > new Date(borrow.dueDate);
+
+  let overDueMessage = "";
+  if (isOverDue) {
+    const diffTime = Math.abs(returnDate - new Date(borrow.dueDate));
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    overDueMessage = `(Terlambat ${diffDays} hari!)`
+  }
+
+  const result = await prisma.$transaction(async (tx) => {
+    const updatedBorrow = await tx.borrow.update({
+      where: { id: borrowId },
+      data: {
+        status: "RETURNED",
+        returnDate: returnDate,
+      }
+    })
+
+    await tx.book.update({
+      where: { id: borrow.bookId },
+      data: {
+        stock: { increment: 1 }
+      }
+    })
+
+    return updatedBorrow
+  })
 
   res.status(200).json({
     status: "succes",
-    message: "Buku berhasil dikembalikan.",
-    data: {
-      id: Number(borrowId),
-      userId: borrow.userId,
-      bookId: borrow.bookId,
-      borrowDate: borrow.borrowDate,
-      status: borrow.status,
-    },
+    message: `Buku berhasil dikembalikan ${overDueMessage}.`,
+    data: result,
   });
 });
 
