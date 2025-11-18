@@ -29,8 +29,8 @@ route.post(
   verifyToken,
   isAdmin,
   upload.single("cover"),
-  checkCover,
   createBookRules,
+  checkCover,
   validate,
   createBook
 );
