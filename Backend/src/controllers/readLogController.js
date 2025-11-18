@@ -7,16 +7,22 @@ export const logRead = catchAsync(async (req, res, next) => {
   const userId = req.user.id;
 
   const book = await prisma.book.findUnique({
-    where: { id: Number(bookId) },
+    where: { id: bookId },
   });
+
   if (!book) {
     return next(new AppError("Buku tidak ditemukan", 404));
   }
+
   const read = await prisma.readLog.create({
-    data: { userId, bookId: Number(bookId), readAt: new Date() },
+    data: { userId, bookId, readAt: new Date() },
   });
 
-  res.status(200).json({ message: "Aktivitas membaca tercatat.", data: read });
+  res.status(201).json({
+    status: "success",
+    message: "Aktivitas membaca tercatat.",
+    data: read,
+  });
 });
 
 export const getAllReadLogs = catchAsync(async (req, res, next) => {
@@ -27,5 +33,9 @@ export const getAllReadLogs = catchAsync(async (req, res, next) => {
     },
     orderBy: { readAt: "desc" },
   });
-  res.json(logs);
+
+  res.status(200).json({
+    status: "success",
+    data: logs,
+  });
 });
