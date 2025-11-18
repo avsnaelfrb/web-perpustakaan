@@ -31,7 +31,7 @@ export const register = catchAsync(async (req, res, next) => {
   newUser.password = undefined;
 
   res.status(201).json({
-    status: "succes",
+    status: "success",
     message: "Berhasil registrasi user baru",
     data: newUser,
   });
@@ -53,7 +53,7 @@ export const login = catchAsync(async (req, res, next) => {
   const token = jwt.sign(payload, secret, { expiresIn: "1d" });
 
   res.status(200).json({
-    status: "succes",
+    status: "success",
     message: "berhasil login",
     data: {
       id: user.id,
