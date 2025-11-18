@@ -3,34 +3,26 @@ import catchAsync from "../utils/catchAsync.js";
 import AppError from "../utils/appError.js";
 
 export const createBook = catchAsync(async (req, res, next) => {
-  const { title, author, description, type, genreId, stock, year } = req.body;
-
-  if (!title || !author || !type || !genreId || !year) {
-    return next(new AppError("field wajib diisi", 400));
-  }
-
-  const cover = req.file ? `/uploads/thumbnails/${req.file.filename}` : null;
-  if (!cover) {
-    return next(new AppError("cover harus diisi", 400));
-  }
+  const { title, author, description, type, genreId, stock, year, coverPath } =
+    req.body;
 
   const newBook = await prisma.book.create({
     data: {
       title,
       author,
       description,
-      cover,
+      cover: coverPath,
       type,
-      yearOfRelease: Number(year),
-      genreId: Number(genreId),
-      stock: stock ? Number(stock) : 1,
+      yearOfRelease: year,
+      genreId: genreId,
+      stock: stock ? stock : 1,
     },
   });
 
   res.status(201).json({
-    status: "succes",
-    message: "berhasil menambahkan data",
-    data: newBook
+    status: "success",
+    message: "Berhasil menambahkan data",
+    data: newBook,
   });
 });
 
@@ -40,7 +32,7 @@ export const getAllBook = catchAsync(async (req, res, next) => {
   let filters = {};
 
   if (genreId) {
-    filters.genreId = Number(genreId);
+    filters.genreId = genreId;
   }
   if (type) {
     filters.type = type;
@@ -61,14 +53,14 @@ export const getAllBook = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: "success",
     message: "Berhasil mengambil data semua buku",
-    data: books
+    data: books,
   });
 });
 
 export const getBookById = catchAsync(async (req, res, next) => {
   const { id } = req.params;
   const book = await prisma.book.findUnique({
-    where: { id: Number(id) },
+    where: { id },
   });
 
   if (!book) {
@@ -76,55 +68,66 @@ export const getBookById = catchAsync(async (req, res, next) => {
   }
 
   res.status(200).json({
-    status: "succes",
+    status: "success",
     message: `Berhasil mengambil data buku dengan id ${id}`,
-    data: book
+    data: book,
   });
 });
 
 export const UpdateBook = catchAsync(async (req, res, next) => {
   const { id } = req.params;
-  const { title, author, description, type, genreId, stock } = req.body;
+  const { title, author, description, type, genreId, stock, year } = req.body;
 
-  const book = await prisma.book.findUnique({
-    where: {
-      id: Number(id),
-    },
+  const bookExist = await prisma.book.findUnique({
+    where: { id },
   });
 
-  const cover = req.file ? `/uploads/thumbnails/${req.file.filename}` : null;
-
-  if (!book) {
+  if (!bookExist) {
     return next(new AppError("Buku tidak ditemukan", 404));
   }
+
+  const dataToUpdate = {
+    title,
+    author,
+    description,
+    type,
+    genreId : genreId ? Number(genreId) : undefined,
+    stock : stock ? Number(stock) : undefined,
+    yearOfRelease: year ? Number(year) : undefined,
+  };
+
+  if (req.file) {
+    dataToUpdate.cover = `/uploads/covers/${req.file.filename}`;
+  }
+
   const updatedBook = await prisma.book.update({
     where: { id: Number(id) },
-    data: {
-      title,
-      author,
-      description,
-      type,
-      genreId: Number(genreId),
-      stock: stock ? Number(stock) : 1,
-      cover,
-    },
+    data: dataToUpdate,
   });
+
   res.status(200).json({
-    status: "succes",
+    status: "success",
     message: `Berhasil mengupdate buku dengan id ${id}`,
-    data: updatedBook
+    data: updatedBook,
   });
 });
 
 export const deleteBook = catchAsync(async (req, res, next) => {
   const { id } = req.params;
 
+  const book = await prisma.book.findUnique({
+    where: { id: id },
+  });
+  if (!book) {
+    return next(new AppError(`Buku dengan id ${id}, tidak ditemukan`, 404));
+  }
+
   const delBook = await prisma.book.delete({
     where: { id: Number(id) },
   });
   res.status(200).json({
-    status: "succes",
+    status: "success",
     message: `Berhasil menghapus data buku dengan id ${id}`,
-    data: delBook
+    data: delBook,
   });
 });

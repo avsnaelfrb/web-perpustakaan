@@ -7,10 +7,6 @@ import AppError from "../utils/appError.js";
 export const register = catchAsync(async (req, res, next) => {
   const { name, email, password, nim } = req.body;
 
-  if (!name || !email || !password || !nim) {
-    return next(new AppError("Harap isi seluruh field", 400));
-  }
-
   const existUser = await prisma.user.findUnique({
     where: { email },
   });
@@ -28,11 +24,15 @@ export const register = catchAsync(async (req, res, next) => {
       email,
       password: hashedPassword,
       nim,
+      role: "USER",
     },
   });
-  res.status(200).json({
-    status: "succes",
-    message: "Berhasil menambahkan user",
+
+  newUser.password = undefined;
+
+  res.status(201).json({
+    status: "success",
+    message: "Berhasil registrasi user baru",
     data: newUser,
   });
 });
@@ -43,27 +43,22 @@ export const login = catchAsync(async (req, res, next) => {
   const user = await prisma.user.findUnique({
     where: { email },
   });
-  
-  if (!user) {
-    return next(new AppError("User tidak ditemukan", 404))
+
+  if (!user || !(await bcrypt.compare(password, user.password))) {
+    return next(new AppError("Email atau password salah", 401));
   }
-  
-  const passwordMatch = await bcrypt.compare(password, user.password);
-  if (!passwordMatch) {
-    return next(AppError("Password", 404))
-  }
-  
+
   const payload = { id: user.id, role: user.role };
   const secret = process.env.JWT_SECRET;
   const token = jwt.sign(payload, secret, { expiresIn: "1d" });
 
   res.status(200).json({
-    status: "succes",
+    status: "success",
     message: "berhasil login",
     data: {
       id: user.id,
       name: user.name,
-      email,
+      email: user.email,
       role: user.role,
       nim: user.nim
     },
