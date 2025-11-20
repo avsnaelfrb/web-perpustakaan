@@ -3,7 +3,7 @@ import catchAsync from "../utils/catchAsync.js";
 import AppError from "../utils/appError.js";
 
 export const createBook = catchAsync(async (req, res, next) => {
-  const { title, author, description, type, genreId, stock, year, coverPath } =
+  const { title, author, description, type, genreId, stock, year, filePath } =
     req.body;
 
   const newBook = await prisma.book.create({
@@ -11,7 +11,7 @@ export const createBook = catchAsync(async (req, res, next) => {
       title,
       author,
       description,
-      cover: coverPath,
+      cover: filePath,
       type,
       yearOfRelease: year,
       genreId: genreId,
