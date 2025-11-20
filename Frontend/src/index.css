@@ -1,6 +1,30 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@plugin "daisyui";
+
+.content-fixed {
+  position: fixed;
+  top: 64px;
+  left: 0;          
+  right: 0;
+  bottom: 0;
+  background: white;
+  overflow-y: auto;
+  z-index: 40;
+  padding: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .content-fixed {
+    left: 15rem;
+  }
+}
+
+.content-fixed .page-container {
+  max-width: 1280px;
+  margin: 0 auto;
+}
 
 :root{
   --brand-500: #6d28d9;

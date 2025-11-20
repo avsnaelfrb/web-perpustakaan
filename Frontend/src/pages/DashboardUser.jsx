@@ -25,7 +25,7 @@ export default function DashboardUser() {
       <div className="flex-1 flex flex-col lg:ml-0">
         <Navbar 
           title="Dashboard User" 
-          onMenuClick={() => setSidebarOpen(true)} 
+          onMenuClick={() => setSidebarOpen(v => !v)} 
         />
         
         <main className="flex-1 p-4 lg:p-6 overflow-x-hidden">
