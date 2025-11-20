@@ -1,3 +1,4 @@
+// src/pages/Katalog.jsx
 import React, { useEffect, useState } from 'react';
 import api from '../utils/api';
 import ItemCard from '../components/ItemCard';
@@ -5,7 +6,11 @@ import FiltersPanel from '../components/FiltersPanel';
 
 export default function Katalog() {
   const [items, setItems] = useState([]);
-  const [filters, setFilters] = useState({ q: '', author: '', category:'', genre:'', year:'', type:'' });
+  const [filters, setFilters] = useState({ 
+    search: '',      // Changed from 'q' to 'search'
+    type: '',        // Book type (BOOK, JOURNAL, ARTICLE)
+    genreId: ''      // Changed from 'genre' to 'genreId'
+  });
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
@@ -30,39 +35,42 @@ export default function Katalog() {
     setLoading(true);
     setError('');
 
-    try {
-      const params = { page, limit: 12 };
-      Object.entries(filters).forEach(([key, val]) => {
-        if (String(val).trim() !== '') params[key] = val;
-      });
-
-      const res = await api.get('/book', { params });
-
-      const resData = res?.data?.data ?? res?.data ?? [];
-      const list = Array.isArray(resData) ? resData : (resData.items ?? []);
-      const count = Array.isArray(resData) ? list.length : (resData.total ?? list.length);
-
-      const normalized = list.map(b => {
-        const coverField = b.cover ?? ''; 
-        const coverUrl = coverBuku(coverField);
-        return {
-          ...b,
-          coverUrl,
-        };
-      });
-
-      setItems(normalized);
-      setTotal(count);
-
-    } catch (err) {
-      console.error("Failed to load items:", err);
-      setError(err.response?.data?.message || "Gagal mengambil data");
-    } finally {
-      setLoading(false);
+    const params = { page, limit: 12 };
+    
+    // Only add filters that have values
+    if (filters.search?.trim()) {
+      params.search = filters.search.trim();
     }
+    if (filters.type?.trim()) {
+      params.type = filters.type.trim();
+    }
+    if (filters.genreId) {
+      params.genreId = filters.genreId; // Keep as string
+    }
+
+    const res = await api.get('/book', { params });
+
+    const resData = res?.data?.data ?? res?.data ?? [];
+    const list = Array.isArray(resData) ? resData : (resData.items ?? []);
+    const count = Array.isArray(resData) ? list.length : (resData.total ?? list.length);
+
+    const normalized = list.map(b => {
+      const coverField = b.cover ?? ''; 
+      const coverUrl = coverBuku(coverField);
+      return {
+        ...b,
+        coverUrl,
+      };
+    });
+
+    setItems(normalized);
+    setTotal(count);
+    setLoading(false);
   };
 
-  useEffect(() => { load(); }, [filters, page]);
+  useEffect(() => { 
+    load(); 
+  }, [filters.search, filters.type, filters.genreId, page]);
 
   return (
     <div className="content-fixed">
@@ -121,13 +129,14 @@ export default function Katalog() {
                   </svg>
                   <input
                     type="text"
-                    value={filters.q}
+                    value={filters.search}
                     onChange={e => {
+                      console.log('🔤 Search input changed:', e.target.value);
                       setPage(1);
-                      setFilters(f => ({ ...f, q: e.target.value }));
+                      setFilters(f => ({ ...f, search: e.target.value }));
                     }}
                     className="w-full text-gray-800 pl-9 lg:pl-10 pr-3 lg:pr-4 py-2 lg:py-3 border rounded-lg text-sm lg:text-base"
-                    placeholder="Cari judul, penulis..."
+                    placeholder="Cari judul, penulis, deskripsi..."
                   />
                 </div>
               </div>
