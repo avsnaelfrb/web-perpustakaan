@@ -21,7 +21,7 @@ model User {
   nim          Int       @unique
   password     String
   role         Role      @default(USER)
-  photoProfile String?  
+  photoProfile String  
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
