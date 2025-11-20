@@ -13,7 +13,7 @@ export default function FiltersPanel({ filters, setFilters }) {
         <select
           value={filters.type}
           onChange={e => setFilters(f => ({ ...f, type: e.target.value }))}
-          className="w-full px-3 py-2 border rounded-lg text-sm lg:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="w-full text-white px-3 py-2 border rounded-lg text-sm lg:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         >
           <option value="">Semua Jenis</option>
           <option value="BOOK">Buku</option>

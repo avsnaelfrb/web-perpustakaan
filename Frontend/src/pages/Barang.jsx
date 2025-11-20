@@ -102,6 +102,8 @@ export default function Barang() {
 
   return (
     <div>
+      <div className="content-fixed">
+      <div className="page-container">
       {/* Header */}
       <div className="mb-4 lg:mb-8">
         <h1 className="text-xl lg:text-3xl font-bold text-gray-800 mb-1 lg:mb-2">Daftar Barang</h1>
@@ -351,6 +353,8 @@ export default function Barang() {
             <p>Data barang hanya dapat diupdate melalui menu <strong>Pengadaan</strong>, <strong>Peminjaman</strong>, dan <strong>Pengembalian</strong>.</p>
           </div>
         </div>
+      </div>
+      </div>
       </div>
     </div>
   );
