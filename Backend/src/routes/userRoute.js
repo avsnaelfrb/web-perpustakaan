@@ -9,7 +9,6 @@ import {
   paramRule,
   registerRules,
   validate,
-  validateParam,
 } from "../validators/userValidator.js";
 import upload from "../config/multerConfig.js";
 import { checkCover } from "../middleware/checkFile.js";
@@ -21,8 +20,8 @@ router.post("/login", loginRules, validate, login);
 router.put(
   "/photo-profile/:id",
   paramRule,
-  validateParam,
   upload.single("photoProfile"),
+  validate,
   checkCover,
   editPhotoProfile
 );
