@@ -1,4 +1,5 @@
 import express from "express";
+import rateLimit from "express-rate-limit";
 import {
   register,
   login,
@@ -12,11 +13,25 @@ import {
 } from "../validators/userValidator.js";
 import upload from "../config/multerConfig.js";
 import { checkCover } from "../middleware/checkFile.js";
+import AppError from "../utils/appError.js";
 
 const router = express.Router();
 
-router.post("/register", registerRules, validate, register);
-router.post("/login", loginRules, validate, login);
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res, next, options) => {
+    res.status(options.statusCode).json({
+      status: "fail",
+      message: "Terlalu banyak percobaan login/register. Silahkan coba lagi dalam 15 menit."
+    });
+  }
+})
+
+router.post("/register", authLimiter, registerRules, validate, register);
+router.post("/login", authLimiter, loginRules, validate, login);
 router.put(
   "/photo-profile/:id",
   paramRule,
