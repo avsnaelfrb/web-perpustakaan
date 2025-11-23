@@ -3,6 +3,9 @@ import express from "express";
 import mainRoute from "./src/routes/mainRoute.js";
 import cors from "cors";
 import errorHandler from "./src/middleware/errorHandler.js";
+import { validateEnv } from "./src/config/envValidator.js";
+
+validateEnv();
 
 const corsOp = {
   origin: process.env.CORS_ALLOW.split(","),
