@@ -2,7 +2,7 @@ import prisma from "../config/prismaConfig.js";
 import AppError from "../utils/appError.js";
 import catchAsync from "../utils/catchAsync.js";
 
-const BORROW_DURATION_DAYS = 7;
+import appConfig from "../config/appConfig.js";
 
 export const borrowBook = catchAsync(async (req, res, next) => {
   const { bookId } = req.params;
@@ -45,7 +45,7 @@ export const borrowBook = catchAsync(async (req, res, next) => {
 
   const now = new Date();
   const dueDate = new Date(now);
-  dueDate.setDate(dueDate.getDate() + BORROW_DURATION_DAYS);
+  dueDate.setDate(dueDate.getDate() + appConfig.BORROW_DURATION_DAYS);
 
   const result = await prisma.$transaction(async (tx) => {
     await tx.book.update({
@@ -124,17 +124,33 @@ export const returnBook = catchAsync(async (req, res, next) => {
   });
 });
 
-export const getAllBorrow = catchAsync( async (req, res) => {
+export const getAllBorrow = catchAsync(async (req, res) => {
+  // Get pagination query params
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const skip = (page - 1) * limit;
+
+  const totalCount = await prisma.borrow.count();
+
   const borrows = await prisma.borrow.findMany({
     include: {
       user: { select: { name: true, email: true } },
       book: { select: { title: true } },
     },
     orderBy: { borrowDate: "desc" },
+    skip,
+    take: limit,
   });
+
   res.status(200).json({
     status: "success",
-    message: "berhasil mengambil semua data pinjaman buku",
+    message: "berhasil mengambil data pinjaman buku",
+    meta: {
+      total: totalCount,
+      page,
+      limit,
+      pages: Math.ceil(totalCount / limit),
+    },
     data: borrows,
   });
 });

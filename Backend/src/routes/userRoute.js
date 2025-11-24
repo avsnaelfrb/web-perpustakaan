@@ -14,6 +14,7 @@ import {
 import upload from "../config/multerConfig.js";
 import { checkCover } from "../middleware/checkFile.js";
 import AppError from "../utils/appError.js";
+import { verifyToken } from "../middleware/middleware.js";
 
 const router = express.Router();
 
@@ -34,6 +35,7 @@ router.post("/register", authLimiter, registerRules, validate, register);
 router.post("/login", authLimiter, loginRules, validate, login);
 router.put(
   "/photo-profile/:id",
+  verifyToken,
   paramRule,
   upload.single("photoProfile"),
   validate,
