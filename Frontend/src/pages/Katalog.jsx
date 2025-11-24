@@ -45,7 +45,7 @@ export default function Katalog() {
       params.type = filters.type.trim();
     }
     if (filters.genreId) {
-      params.genreId = filters.genreId; // Keep as string
+      params.genreId = Number(filters.genreId);
     }
 
     const res = await api.get('/book', { params });
