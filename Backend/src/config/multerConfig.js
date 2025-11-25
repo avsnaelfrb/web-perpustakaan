@@ -3,8 +3,14 @@ import path from "path"
 
 const storage = multer.diskStorage({
 
-    destination : (req, file, cb) => {
-        cb(null, "public/uploads/covers")
+    destination: (req, file, cb) => {
+        if (file.fieldname === 'bookFile') {
+            cb(null, "public/uploads/books")
+        } else if (file.fieldname === 'photoProfile') {
+            cb(null, "public/uploads/profiles")
+        } else {
+            cb(null, "public/uploads/covers")
+        }
     },
     filename : (req, file, cb) => {
         const ext = path.extname(file.originalname);
@@ -14,21 +20,34 @@ const storage = multer.diskStorage({
 })
 
 const fileFilter = (req, file, cb) => {
-    if (
-        file.mimetype === "image/jpeg" ||
-        file.mimetype === "image/png"
-    ) {
-        cb(null, true)
+  if (file.fieldname === "bookFile") {
+    if (file.mimetype === "application/pdf") {
+      cb(null, true);
     } else {
-        cb(new Error("Hanya file .jpeg  dan .png yang diizinkan"))
+      cb(new Error("File buku harus berformat PDF!"), false);
     }
+  } 
+  else if (file.fieldname === "cover" || file.fieldname === "photoProfile") {
+    if (
+      file.mimetype === "image/jpeg" ||
+      file.mimetype === "image/png" ||
+      file.mimetype === "image/jpg"
+    ) {
+      cb(null, true);
+    } else {
+      cb(new Error("File harus berupa gambar (JPG/PNG)!"), false);
+    }
+  } 
+  else {
+    cb(new Error("Field tidak dikenali!"), false);
+  }
 };
 
 const upload = multer({
     storage: storage,
     fileFilter: fileFilter,
     limits: {
-        fieldSize: 1024 * 1024 * 5,
+        fieldSize: 1024 * 1024 * 10,
     }
 });
 
