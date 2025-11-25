@@ -17,7 +17,7 @@ export const register = catchAsync(async (req, res, next) => {
 
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
-  const defaultProfile = `/ProfilePicture/Default/default.jpeg`
+  const defaultProfile = `/defaultProfile/default.jpeg`
 
   const newUser = await prisma.user.create({
     data: {
@@ -29,8 +29,6 @@ export const register = catchAsync(async (req, res, next) => {
       photoProfile: defaultProfile
     },
   });
-
-  newUser.password = undefined;
 
   res.status(201).json({
     status: "success",
@@ -70,6 +68,7 @@ export const login = catchAsync(async (req, res, next) => {
 
 export const editPhotoProfile = catchAsync(async (req, res, next) => {
   const { id } = req.params;
+  const { photoProfilePath } = req.body
 
   const userExist = await prisma.user.findUnique({
     where: { id },
@@ -78,18 +77,18 @@ export const editPhotoProfile = catchAsync(async (req, res, next) => {
   if (!userExist) {
     return next(new AppError("User tidak ditemukan", 404));
   }
-
-  if (!req.file) {
-    return next(new AppError("File foto profile wajib diupload", 400));
+  
+  const updateData = {
+    updatedAt: new Date(),
+  };
+  
+  if (photoProfilePath) {
+    updateData.photoProfile
   }
-
-  const photoProfilePath = `/uploads/pfp/${req.file.filename}`;
 
   const newProfile = await prisma.user.update({
     where: { id },
-    data: {
-      photoProfile: photoProfilePath,
-    },
+    data: updateData
   });
 
   res.status(200).json({

@@ -42,6 +42,10 @@ model Book {
   updatedAt    DateTime  @updatedAt
   yearOfRelease Int
 
+  category     BookCategory @default(PHYSICAL)
+  fileUrl      String?
+  fileSize     Int?
+
   genre        Genre     @relation(fields: [genreId], references: [id])
   borrows      Borrow[]
   readLogs     ReadLog[]
@@ -91,5 +95,10 @@ enum BorrowStatus {
   BORROWED
   RETURNED
   LATE
+}
+
+enum BookCategory {
+  PHYSICAL
+  DIGITAL
 }
 

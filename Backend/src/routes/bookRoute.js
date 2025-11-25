@@ -10,7 +10,7 @@ import {
 
 import { verifyToken, isAdmin } from "../middleware/middleware.js";
 import upload from "../config/multerConfig.js";
-import { checkCover } from "../middleware/checkFile.js";
+import { handleFilePath } from "../middleware/checkFile.js";
 
 //validator
 import {
@@ -28,9 +28,19 @@ route.post(
   "/",
   verifyToken,
   isAdmin,
-  upload.single("cover"),
+  upload.fields([
+    {
+      name: "cover",
+      maxCount: 1
+    },
+    {
+      name: 'bookFile',
+      maxCount: 1
+    }
+  ]
+  ),
   createBookRules,
-  checkCover,
+  handleFilePath,
   validate,
   createBook
 );
