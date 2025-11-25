@@ -24,7 +24,7 @@ export const register = catchAsync(async (req, res, next) => {
       name,
       email,
       password: hashedPassword,
-      nim,
+      nim : String(nim),
       role: "USER",
       photoProfile: defaultProfile
     },
