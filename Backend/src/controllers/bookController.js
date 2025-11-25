@@ -3,19 +3,27 @@ import catchAsync from "../utils/catchAsync.js";
 import AppError from "../utils/appError.js";
 
 export const createBook = catchAsync(async (req, res, next) => {
-  const { title, author, description, type, genreId, stock, year, filePath } =
+  const { title, author, description, type, genreId, stock, year, category, coverPath, bookFilePath, bookFileSize } =
     req.body;
+  
+  if (category === 'DIGITAL' && !bookFilePath){
+    return next(new AppError('Buku digital wajib menyertakan file PDF!', 400))
+  }
+
+  const finalStock = category === 'PHYSICAL' ? (stock ? parseInt(stock) : 1) : 0; 
 
   const newBook = await prisma.book.create({
     data: {
       title,
       author,
       description,
-      cover: filePath,
+      cover: coverPath,
+      fileUrl: bookFilePath,
+      fileSize: bookFileSize ? parseInt(bookFileSize) : null,
       type,
       yearOfRelease: year,
       genreId: genreId,
-      stock: stock ? stock : 1,
+      stock: finalStock,
     },
   });
 
