@@ -12,7 +12,7 @@ import {
   validate,
 } from "../validators/userValidator.js";
 import upload from "../config/multerConfig.js";
-import { handleFilePath } from "../middleware/checkFile.js";
+import { handleFilePaths } from "../middleware/checkFile.js";
 import { verifyToken } from "../middleware/middleware.js";
 
 const router = express.Router();
@@ -38,7 +38,7 @@ router.put(
   paramRule,
   upload.single("photoProfile"),
   validate,
-  handleFilePath,
+  handleFilePaths,
   editPhotoProfile
 );
 

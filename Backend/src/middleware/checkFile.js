@@ -1,13 +1,13 @@
 import AppError from "../utils/appError.js";
 
-export const handleFilePath = (req, res, next) => {
+export const handleFilePaths = (req, res, next) => {
   req.body.coverPath = null;
   req.body.bookFilePath = null;
   req.body.photoProfilePath = null;
   req.body.bookFileSize = null;
 
   if (req.files) {
-    if (req.files['coverBook']?.[0]) {
+    if (req.files['cover']?.[0]) {
       req.body.coverPath = `/uploads/covers/${req.files['cover'][0].filename}`;
     }
 
