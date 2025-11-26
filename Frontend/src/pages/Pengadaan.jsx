@@ -6,14 +6,18 @@ export default function Pengadaan({ onAdded }) {
     title: '',
     author: '',
     description: '',
-    cover: '',
     type: 'BOOK',
-    yearOfRelease: '',
     genreId: '',
-    stock: 1
+    stock: 1,
+    year: '',
+    category: 'PHYSICAL', // PHYSICAL | DIGITAL
   });
-  const [file, setFile] = useState(null);
-  const [fileName, setFileName] = useState('');
+
+  const [coverFile, setCoverFile] = useState(null);
+  const [coverFileName, setCoverFileName] = useState('');
+  const [bookFile, setBookFile] = useState(null);
+  const [bookFileName, setBookFileName] = useState('');
+
   const [genres, setGenres] = useState([]);
   const [loadingGenres, setLoadingGenres] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -29,7 +33,11 @@ export default function Pengadaan({ onAdded }) {
     try {
       const res = await api.get('/genre');
       const body = res?.data ?? res;
-      const list = Array.isArray(body) ? body : Array.isArray(body?.data) ? body.data : [];
+      const list = Array.isArray(body)
+        ? body
+        : Array.isArray(body?.data)
+        ? body.data
+        : [];
       setGenres(list);
     } catch (err) {
       console.error('Error loading genres:', err);
@@ -42,21 +50,29 @@ export default function Pengadaan({ onAdded }) {
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    if (name === 'stock' || name === 'genreId') {
-      const numValue = parseInt(value) || (name === 'stock' ? 1 : '');
-      setForm(prev => ({ ...prev, [name]: numValue }));
+    if (['stock', 'genreId', 'year'].includes(name)) {
+      const numValue = value === '' ? '' : Number(value);
+      setForm((prev) => ({ ...prev, [name]: numValue }));
     } else {
-      setForm(prev => ({ ...prev, [name]: value }));
+      setForm((prev) => ({ ...prev, [name]: value }));
     }
 
     setError('');
     setSuccess('');
   };
 
-  const handleFileChange = (e) => {
+  const handleCoverChange = (e) => {
     const f = e.target.files && e.target.files[0] ? e.target.files[0] : null;
-    setFile(f);
-    setFileName(f ? f.name : '');
+    setCoverFile(f);
+    setCoverFileName(f ? f.name : '');
+    setError('');
+    setSuccess('');
+  };
+
+  const handleBookFileChange = (e) => {
+    const f = e.target.files && e.target.files[0] ? e.target.files[0] : null;
+    setBookFile(f);
+    setBookFileName(f ? f.name : '');
     setError('');
     setSuccess('');
   };
@@ -69,12 +85,13 @@ export default function Pengadaan({ onAdded }) {
     setSuccess('');
     setSubmitting(true);
 
-    if (!form.title.trim()) {
+    // Basic validations
+    if (!form.title || !form.title.trim()) {
       setError('Judul wajib diisi');
       setSubmitting(false);
       return;
     }
-    if (!form.author.trim()) {
+    if (!form.author || !form.author.trim()) {
       setError('Penulis wajib diisi');
       setSubmitting(false);
       return;
@@ -84,28 +101,44 @@ export default function Pengadaan({ onAdded }) {
       setSubmitting(false);
       return;
     }
+    if (!form.year) {
+      setError('Tahun wajib diisi');
+      setSubmitting(false);
+      return;
+    }
+    if (form.category === 'DIGITAL' && !bookFile) {
+      setError('Buku digital wajib menyertakan file PDF!');
+      setSubmitting(false);
+      return;
+    }
 
     try {
       const formData = new FormData();
 
       formData.append('title', form.title.trim());
       formData.append('author', form.author.trim());
+      if (form.description) {
+        formData.append('description', form.description.trim());
+      }
+
       formData.append('type', form.type || 'BOOK');
       formData.append('genreId', String(form.genreId));
       formData.append('stock', String(Number(form.stock) || 1));
+      formData.append('year', String(form.year));
+      formData.append('category', form.category || 'PHYSICAL');
 
-      const yearValue = form.yearOfRelease ? Number(form.yearOfRelease) : new Date().getFullYear();
-      formData.append('year', String(yearValue));
-
-      if (form.description) formData.append('description', form.description.trim());
-
-      if (file) {
-        formData.append('cover', file);
-      } else if (form.cover) {
-        formData.append('cover', form.cover.trim());
+      if (coverFile) {
+        formData.append('cover', coverFile); // matches multer field "cover"
       }
 
-      const res = await api.post('/book', formData);
+      if (form.category === 'DIGITAL' && bookFile) {
+        formData.append('bookFile', bookFile); // matches multer field "bookFile"
+      }
+
+      const res = await api.post('/book', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
       setSuccess('Buku berhasil ditambahkan!');
 
       // Reset form
@@ -113,14 +146,16 @@ export default function Pengadaan({ onAdded }) {
         title: '',
         author: '',
         description: '',
-        cover: '',
         type: 'BOOK',
-        yearOfRelease: '',
         genreId: '',
-        stock: 1
+        stock: 1,
+        year: '',
+        category: 'PHYSICAL',
       });
-      setFile(null);
-      setFileName('');
+      setCoverFile(null);
+      setCoverFileName('');
+      setBookFile(null);
+      setBookFileName('');
 
       if (onAdded && res.data) {
         onAdded(res.data?.data || res.data);
@@ -128,22 +163,57 @@ export default function Pengadaan({ onAdded }) {
 
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      const serverMsg = err.response?.data?.message || err.response?.data || err.message;
-      setError(typeof serverMsg === 'string' ? serverMsg : JSON.stringify(serverMsg));
+      console.error(err);
+      const serverMsg =
+        err.response?.data?.message || err.response?.data || err.message;
+      setError(
+        typeof serverMsg === 'string' ? serverMsg : JSON.stringify(serverMsg)
+      );
     } finally {
       setSubmitting(false);
     }
   };
 
+  const handleReset = () => {
+    setForm({
+      title: '',
+      author: '',
+      description: '',
+      type: 'BOOK',
+      genreId: '',
+      stock: 1,
+      year: '',
+      category: 'PHYSICAL',
+    });
+    setCoverFile(null);
+    setCoverFileName('');
+    setBookFile(null);
+    setBookFileName('');
+    setError('');
+    setSuccess('');
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 lg:p-6">
-      <h2 className="text-xl lg:text-2xl font-bold text-gray-800 mb-4 lg:mb-6">Form Pengadaan Buku</h2>
+      <h2 className="text-xl lg:text-2xl font-bold text-gray-800 mb-4 lg:mb-6">
+        Form Pengadaan Buku
+      </h2>
 
       {error && (
         <div className="mb-4 p-3 lg:p-4 bg-red-50 border-l-4 border-red-500 rounded">
           <div className="flex items-start gap-2 lg:gap-3">
-            <svg className="w-4 h-4 lg:w-5 lg:h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg
+              className="w-4 h-4 lg:w-5 lg:h-5 text-red-500 flex-shrink-0 mt-0.5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
             <p className="text-xs lg:text-sm text-red-700">{error}</p>
           </div>
@@ -153,15 +223,28 @@ export default function Pengadaan({ onAdded }) {
       {success && (
         <div className="mb-4 p-3 lg:p-4 bg-green-50 border-l-4 border-green-500 rounded">
           <div className="flex items-start gap-2 lg:gap-3">
-            <svg className="w-4 h-4 lg:w-5 lg:h-5 text-green-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg
+              className="w-4 h-4 lg:w-5 lg:h-5 text-green-500 flex-shrink-0 mt-0.5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
             <p className="text-xs lg:text-sm text-green-700">{success}</p>
           </div>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
+      <form
+        onSubmit={handleSubmit}
+        className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4"
+      >
         {/* Judul */}
         <div>
           <label className="block text-xs lg:text-sm font-medium text-gray-700 mb-2">
@@ -212,30 +295,18 @@ export default function Pengadaan({ onAdded }) {
         {/* Cover (file upload) */}
         <div>
           <label className="block text-xs lg:text-sm font-medium text-gray-700 mb-2">
-            Upload Cover <span className="text-gray-400 text-xs ml-1">(opsional)</span>
+            Upload Cover{' '}
+            <span className="text-gray-400 text-xs ml-1">(opsional)</span>
           </label>
           <input
             type="file"
             accept="image/*"
-            onChange={handleFileChange}
+            onChange={handleCoverChange}
             className="w-full text-white px-3 lg:px-4 py-2 border border-gray-300 rounded-lg outline-none bg-white text-sm lg:text-base"
           />
-          {fileName && <p className="text-xs mt-1 text-gray-600">File: {fileName}</p>}
-        </div>
-
-        {/* Cover URL */}
-        <div>
-          <label className="block text-xs lg:text-sm font-medium text-gray-700 mb-2">
-            URL Cover <span className="text-gray-400 text-xs ml-1">(opsional)</span>
-          </label>
-          <input
-            type="text"
-            name="cover"
-            value={form.cover}
-            onChange={handleChange}
-            placeholder="https://example.com/cover.jpg"
-            className="w-full text-white px-3 lg:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm lg:text-base"
-          />
+          {coverFileName && (
+            <p className="text-xs mt-1 text-gray-600">File: {coverFileName}</p>
+          )}
         </div>
 
         {/* Tipe */}
@@ -252,6 +323,22 @@ export default function Pengadaan({ onAdded }) {
             <option value="BOOK">📚 Buku</option>
             <option value="JOURNAL">📰 Jurnal</option>
             <option value="ARTICLE">📄 Artikel</option>
+          </select>
+        </div>
+
+        {/* Kategori */}
+        <div>
+          <label className="block text-xs lg:text-sm font-medium text-gray-700 mb-2">
+            Kategori
+          </label>
+          <select
+            name="category"
+            value={form.category}
+            onChange={handleChange}
+            className="w-full text-white px-3 lg:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm lg:text-base"
+          >
+            <option value="PHYSICAL">📗 Fisik</option>
+            <option value="DIGITAL">💾 Digital</option>
           </select>
         </div>
 
@@ -273,8 +360,10 @@ export default function Pengadaan({ onAdded }) {
               required
             >
               <option value="">-- Pilih Genre --</option>
-              {genres.map(g => (
-                <option key={g.id} value={g.id}>{g.name}</option>
+              {genres.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.name}
+                </option>
               ))}
             </select>
           )}
@@ -287,11 +376,11 @@ export default function Pengadaan({ onAdded }) {
           </label>
           <input
             type="number"
-            name="yearOfRelease"
-            value={form.yearOfRelease}
+            name="year"
+            value={form.year}
             onChange={handleChange}
             placeholder="2024"
-            min="1900"
+            min="1000"
             max={new Date().getFullYear()}
             className="w-full text-white px-3 lg:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm lg:text-base"
           />
@@ -313,24 +402,32 @@ export default function Pengadaan({ onAdded }) {
           />
         </div>
 
+        {/* File PDF (Digital only) */}
+        {form.category === 'DIGITAL' && (
+          <div className="lg:col-span-2">
+            <label className="block text-xs lg:text-sm font-medium text-gray-700 mb-2">
+              File Buku (PDF){' '}
+              <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="file"
+              accept="application/pdf"
+              onChange={handleBookFileChange}
+              className="w-full text-white px-3 lg:px-4 py-2 border border-gray-300 rounded-lg outline-none bg-white text-sm lg:text-base"
+            />
+            {bookFileName && (
+              <p className="text-xs mt-1 text-gray-600">
+                File: {bookFileName}
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Submit Button */}
         <div className="lg:col-span-2 flex flex-col sm:flex-row justify-end gap-2 lg:gap-3 pt-2 lg:pt-4">
           <button
             type="button"
-            onClick={() => {
-              setForm({
-                title: '',
-                author: '',
-                description: '',
-                cover: '',
-                type: 'BOOK',
-                yearOfRelease: '',
-                genreId: '',
-                stock: 1
-              });
-              setFile(null);
-              setFileName('');
-            }}
+            onClick={handleReset}
             className="w-full sm:w-auto px-4 lg:px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-medium text-sm lg:text-base"
           >
             Reset
@@ -342,16 +439,42 @@ export default function Pengadaan({ onAdded }) {
           >
             {submitting ? (
               <>
-                <svg className="animate-spin h-4 w-4 lg:h-5 lg:w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <svg
+                  className="animate-spin h-4 w-4 lg:h-5 lg:w-5"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
                 </svg>
                 Menyimpan...
               </>
             ) : (
               <>
-                <svg className="w-4 h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                <svg
+                  className="w-4 h-4 lg:w-5 lg:h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
                 </svg>
                 Simpan Buku
               </>

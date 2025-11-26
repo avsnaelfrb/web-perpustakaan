@@ -1,8 +1,19 @@
 import React from 'react';
 
 export default function ItemCard({ item }) {
-  const cover = item.coverUrl || item.cover;
 
+  const rawCover = item.coverUrl || item.cover;
+
+  const API_RAW = import.meta.env.VITE_API_BASE || 'http://localhost:5000/api';
+  const API_BASE = API_RAW.replace(/\/api\/?$/i, '') || 'http://localhost:5000';
+  
+  const cover =
+    rawCover && rawCover.startsWith('http')
+      ? rawCover
+      : rawCover
+      ? `${API_BASE}${rawCover}`
+      : null;
+  
   return (
     <div className="flex gap-3 lg:gap-4 p-3 lg:p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
       {/* Book Cover - Responsive sizing */}
@@ -15,9 +26,8 @@ export default function ItemCard({ item }) {
             onError={(e) => {
               console.error('Image failed to load:', cover);
               e.currentTarget.onerror = null;
-              e.currentTarget.src = cover.includes('/thumbnails/')
-                ? cover.replace('/thumbnails/', '/covers/')
-                : '/uploads/placeholder-book.png';
+              // fallback placeholder from backend (optional)
+              e.currentTarget.src = `${API_BASE}/uploads/placeholder-book.png`;
             }}
           />
         ) : (
@@ -27,7 +37,7 @@ export default function ItemCard({ item }) {
         )}
       </div>
 
-      {/* Book Details - Responsive text */}
+      {/* Book Details */}
       <div className="flex-1 min-w-0">
         <div className="font-semibold text-gray-900 text-sm sm:text-base lg:text-lg mb-1 line-clamp-2">
           {item.title}
