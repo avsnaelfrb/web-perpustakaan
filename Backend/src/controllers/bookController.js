@@ -24,6 +24,7 @@ export const createBook = catchAsync(async (req, res, next) => {
       yearOfRelease: year,
       genreId: genreId,
       stock: finalStock,
+      category: category,
     },
   });
 

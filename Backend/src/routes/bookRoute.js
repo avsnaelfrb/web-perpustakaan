@@ -10,7 +10,7 @@ import {
 
 import { verifyToken, isAdmin } from "../middleware/middleware.js";
 import upload from "../config/multerConfig.js";
-import { handleFilePath } from "../middleware/checkFile.js";
+import { handleFilePaths } from "../middleware/checkFile.js";
 
 //validator
 import {
@@ -40,7 +40,7 @@ route.post(
   ]
   ),
   createBookRules,
-  handleFilePath,
+  handleFilePaths,
   validate,
   createBook
 );
