@@ -15,7 +15,11 @@ const storage = multer.diskStorage({
     filename : (req, file, cb) => {
         const ext = path.extname(file.originalname);
         const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
-        cb(null, "cover-" + unique + ext)
+        let prefix = "file-";
+        if (file.fieldname === 'bookFile') prefix = "book-";
+        else if (file.fieldname === 'photoProfile') prefix = "profile-";
+        else if (file.fieldname === 'cover') prefix = "cover-";
+        cb(null, prefix + unique + ext)
     }
 })
 
@@ -47,7 +51,7 @@ const upload = multer({
     storage: storage,
     fileFilter: fileFilter,
     limits: {
-        fieldSize: 1024 * 1024 * 10,
+        fileSize: 1024 * 1024 * 10,
     }
 });
 
