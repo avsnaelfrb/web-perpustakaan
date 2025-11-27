@@ -40,7 +40,8 @@ export default function Barang() {
           type: item.type || '',
           genre: item.genre?.name || '',
           genreId: item.genreId,
-          stock: item.stock || 0,
+          category: item.category || 'PHYSICAL',   // ⬅️ ADD THIS
+          stock: item.stock ?? 0,
           cover: item.cover || '',
           createdAt: item.createdAt,
           updatedAt: item.updatedAt
@@ -275,14 +276,38 @@ export default function Barang() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded">{item.genre || '-'}</span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{item.stock} buku</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-3 py-1 text-xs font-medium rounded-full ${
-                        item.stock > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                      }`}>
-                        {item.stock > 0 ? 'Tersedia' : 'Habis'}
-                      </span>
-                    </td>
+                    {(() => {
+                      const isPhysical  = item.category === 'PHYSICAL';
+                      const isDigital   = item.category === 'DIGITAL';
+                      const isAvailable = isPhysical ? item.stock > 0 : true;
+
+                      const stockLabel = isPhysical
+                        ? `${item.stock} buku`
+                        : 'Ada';
+
+                      const statusLabel = isPhysical
+                        ? (isAvailable ? 'Tersedia' : 'Habis')
+                        : 'Tersedia';
+
+                      const statusClass = isPhysical
+                        ? (isAvailable
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-red-100 text-red-700')
+                        : 'bg-blue-100 text-blue-700';
+
+                      return (
+                        <>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                            {stockLabel}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`px-3 py-1 text-xs font-medium rounded-full ${statusClass}`}>
+                              {statusLabel}
+                            </span>
+                          </td>
+                        </>
+                      );
+                    })()}
                   </tr>
                 ))}
               </tbody>
@@ -329,14 +354,34 @@ export default function Barang() {
                   </div>
                 </div>
               </div>
-              <div className="flex justify-between items-center pt-2 border-t text-xs">
-                <span className="text-gray-600">Stok: {item.stock} buku</span>
-                <span className={`px-2 py-1 rounded-full font-medium ${
-                  item.stock > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                }`}>
-                  {item.stock > 0 ? 'Tersedia' : 'Habis'}
-                </span>
-              </div>
+              {(() => {
+                    const isPhysical  = item.category === 'PHYSICAL';
+                    const isDigital   = item.category === 'DIGITAL';
+                    const isAvailable = isPhysical ? item.stock > 0 : true;
+
+                    const stockLabel = isPhysical
+                      ? `${item.stock} buku`
+                      : 'Ada';
+
+                    const statusLabel = isPhysical
+                      ? (isAvailable ? 'Tersedia' : 'Habis')
+                      : 'Tersedia';
+
+                    const statusClass = isPhysical
+                      ? (isAvailable
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-red-100 text-red-700')
+                      : 'bg-blue-100 text-blue-700';
+
+                    return (
+                      <div className="flex justify-between items-center pt-2 border-t text-xs">
+                        <span className="text-gray-600">Stok: {stockLabel}</span>
+                        <span className={`px-2 py-1 rounded-full font-medium ${statusClass}`}>
+                          {statusLabel}
+                        </span>
+                      </div>
+                    );
+                  })()}
             </div>
           ))
         )}
