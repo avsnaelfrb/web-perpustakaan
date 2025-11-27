@@ -6,6 +6,18 @@ export const handleFilePaths = (req, res, next) => {
   req.body.photoProfilePath = null;
   req.body.bookFileSize = null;
 
+  const formatPath = (file) => {
+    let folder = 'covers'
+    if (file.fieldname === 'bookFile') {
+      folder = 'books'
+    }
+    if (file.fieldname === 'photoProfile') {
+      folder = 'profiles'
+    }
+
+    return `/uploads/${folder}/${file.filename}`
+  }
+
   if (req.files) {
     if (req.files['cover']?.[0]) {
       req.body.coverPath = `/uploads/covers/${req.files['cover'][0].filename}`;
@@ -22,12 +34,14 @@ export const handleFilePaths = (req, res, next) => {
   }
 
   if (req.file) {
-    if (req.file.fieldname === 'photoProfile') {
-      req.body.photoProfilePath = `/uploads/profiles/${req.file.filename}`;
+    const path = formatPath(req.file)
+
+    if (req.file.fieldname === 'cover') req.body.coverPath = path;
+    if (req.file.fieldname === 'bookFile') {
+       req.body.bookFilePath = path;
+       req.body.bookFileSize = req.file.size;
     }
-    if (req.file.fieldname === 'cover') {
-       req.body.coverPath = `/uploads/covers/${req.file.filename}`;
-    }
+    if (req.file.fieldname === 'photoProfile') req.body.photoProfilePath = path;
   }
 
   next();

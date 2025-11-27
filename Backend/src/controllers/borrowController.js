@@ -16,6 +16,10 @@ export const borrowBook = catchAsync(async (req, res, next) => {
     return next(new AppError("Buku tidak ditemukan", 404));
   }
 
+  if (book.category === 'DIGITAL') {
+    return next(new AppError('Buku digital tidak perlu dipinjam, silahkan langsung baca', 400))
+  }
+
   if (book.stock <= 0) {
     return next(new AppError("Stock buku habis", 400));
   }
@@ -77,7 +81,7 @@ export const returnBook = catchAsync(async (req, res, next) => {
   const { borrowId } = req.params;
 
   const borrow = await prisma.borrow.findUnique({
-    where: { id: Number(borrowId) },
+    where: { id: borrowId },
   });
 
   if (!borrow) {
