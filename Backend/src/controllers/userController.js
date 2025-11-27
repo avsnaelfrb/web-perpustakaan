@@ -24,7 +24,7 @@ export const register = catchAsync(async (req, res, next) => {
       name,
       email,
       password: hashedPassword,
-      nim : String(nim),
+      nim,
       role: "USER",
       photoProfile: defaultProfile
     },
@@ -77,13 +77,17 @@ export const editPhotoProfile = catchAsync(async (req, res, next) => {
   if (!userExist) {
     return next(new AppError("User tidak ditemukan", 404));
   }
+
+  if (!photoProfilePath) {
+    return next(new AppError('Tidak ada file yang di upload', 400))
+  }
   
   const updateData = {
     updatedAt: new Date(),
   };
   
   if (photoProfilePath) {
-    updateData.photoProfile
+    updateData.photoProfile = photoProfilePath
   }
 
   const newProfile = await prisma.user.update({
