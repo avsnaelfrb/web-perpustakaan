@@ -101,7 +101,7 @@ export const deleteGenre = catchAsync(async (req, res, next) => {
   }
 
   const delGenre = await prisma.genre.delete({
-    where: { id: Number(id) },
+    where: { id, },
   });
 
   res.status(200).json({
