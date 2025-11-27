@@ -64,7 +64,7 @@ model Borrow {
   borrowDate   DateTime  @default(now())
   returnDate   DateTime?
   dueDate      DateTime
-  status       BorrowStatus @default(BORROWED)
+  status       BorrowStatus @default(REQUESTED)
 
   user         User      @relation(fields: [userId], references: [id])
   book         Book      @relation(fields: [bookId], references: [id])
@@ -92,6 +92,7 @@ enum BookType {
 }
 
 enum BorrowStatus {
+  REQUESTED
   BORROWED
   RETURNED
   LATE

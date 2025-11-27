@@ -60,7 +60,8 @@ export const login = catchAsync(async (req, res, next) => {
       name: user.name,
       email: user.email,
       role: user.role,
-      nim: user.nim
+      nim: user.nim,
+      photoProfile: user.photoProfile
     },
     token,
   });
@@ -68,7 +69,7 @@ export const login = catchAsync(async (req, res, next) => {
 
 export const editPhotoProfile = catchAsync(async (req, res, next) => {
   const { id } = req.params;
-  const { photoProfilePath } = req.body
+  const { photoProfilePath } = req.body;
 
   const userExist = await prisma.user.findUnique({
     where: { id },
@@ -77,19 +78,22 @@ export const editPhotoProfile = catchAsync(async (req, res, next) => {
   if (!userExist) {
     return next(new AppError("User tidak ditemukan", 404));
   }
+
+  if (!photoProfilePath) {
+    return next(new AppError("File foto profile tidak ditemukan", 400));
+  }
   
   const updateData = {
+    photoProfile: photoProfilePath,
     updatedAt: new Date(),
   };
-  
-  if (photoProfilePath) {
-    updateData.photoProfile
-  }
 
   const newProfile = await prisma.user.update({
     where: { id },
     data: updateData
   });
+
+  newProfile.password = undefined;
 
   res.status(200).json({
     status: "success",

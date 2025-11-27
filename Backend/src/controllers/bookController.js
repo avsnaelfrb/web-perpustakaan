@@ -3,27 +3,75 @@ import catchAsync from "../utils/catchAsync.js";
 import AppError from "../utils/appError.js";
 
 export const createBook = catchAsync(async (req, res, next) => {
-  const { title, author, description, type, genreId, stock, year, category, coverPath, bookFilePath, bookFileSize } =
-    req.body;
-  
-  if (category === 'DIGITAL' && !bookFilePath){
-    return next(new AppError('Buku digital wajib menyertakan file PDF!', 400))
+  const {
+    title,
+    author,
+    description,
+    type,      // BOOK | JOURNAL | ARTICLE (string)
+    genreId,
+    stock,
+    year,
+    category,  // "PHYSICAL" | "DIGITAL"
+  } = req.body;
+
+  if (!title || !author || !type || !genreId || !year) {
+    return next(new AppError("Field wajib belum lengkap.", 400));
   }
 
-  const finalStock = category === 'PHYSICAL' ? (stock ? parseInt(stock) : 1) : 0; 
+  const parsedGenreId = Number(genreId);
+  const parsedYear = Number(year);
+
+  if (!Number.isInteger(parsedGenreId) || parsedGenreId <= 0) {
+    return next(new AppError("Genre ID tidak valid.", 400));
+  }
+
+  if (!Number.isInteger(parsedYear) || parsedYear < 1000) {
+    return next(new AppError("Tahun terbit tidak valid.", 400));
+  }
+
+  let bookCategory;
+  if (category === "DIGITAL") {
+    bookCategory = "DIGITAL";
+  } else {
+    bookCategory = "PHYSICAL";
+  }
+
+  const coverFile = req.files?.cover?.[0] || null;
+  const bookFile = req.files?.bookFile?.[0] || null;
+
+  const coverPath = coverFile ? `/uploads/covers/${coverFile.filename}` : null;
+  const bookFilePath = bookFile ? `/uploads/books/${bookFile.filename}` : null;
+  const bookFileSize = bookFile ? bookFile.size : null;
+
+  if (bookCategory === "DIGITAL" && !bookFilePath) {
+    return next(new AppError("Buku digital wajib menyertakan file PDF!", 400));
+  }
+
+  const parsedStock = stock !== undefined && stock !== null && stock !== "" 
+    ? Number(stock)
+    : 1;
+
+  if (Number.isNaN(parsedStock) || parsedStock < 0) {
+    return next(new AppError("Stok harus berupa angka >= 0", 400));
+  }
+
+  const finalStock = bookCategory === "PHYSICAL" ? parsedStock : 0;
 
   const newBook = await prisma.book.create({
     data: {
       title,
       author,
       description,
+      type,
+      genreId: parsedGenreId,
+      yearOfRelease: parsedYear,
+
+      category: bookCategory,
+      stock: finalStock,
+
       cover: coverPath,
       fileUrl: bookFilePath,
-      fileSize: bookFileSize ? parseInt(bookFileSize) : null,
-      type,
-      yearOfRelease: year,
-      genreId: genreId,
-      stock: finalStock,
+      fileSize: bookFileSize,
     },
   });
 

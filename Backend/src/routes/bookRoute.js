@@ -40,7 +40,6 @@ route.post(
   ]
   ),
   createBookRules,
-  handleFilePath,
   validate,
   createBook
 );

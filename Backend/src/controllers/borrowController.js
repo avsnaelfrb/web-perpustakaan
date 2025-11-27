@@ -16,6 +16,10 @@ export const borrowBook = catchAsync(async (req, res, next) => {
     return next(new AppError("Buku tidak ditemukan", 404));
   }
 
+  if (book.category === "DIGITAL") {
+    return next(new AppError("Buku digital tidak dapat dipinjam.", 400));
+  }
+
   if (book.stock <= 0) {
     return next(new AppError("Stock buku habis", 400));
   }
@@ -114,6 +118,14 @@ export const returnBook = catchAsync(async (req, res, next) => {
       }
     })
 
+    await tx.readLog.create({
+      data: {
+        userId: borrow.userId,
+        bookId: borrow.bookId,
+        readAt: new Date(),
+      },
+    });
+
     return updatedBorrow
   })
 
@@ -123,6 +135,35 @@ export const returnBook = catchAsync(async (req, res, next) => {
     data: result,
   });
 });
+
+export const getMyBorrowHistory = catchAsync(async (req, res, next) => {
+  const userId = req.user.id;
+
+  const borrows = await prisma.borrow.findMany({
+    where: { userId: Number(userId) },
+    include: {
+      book: {
+        select: {
+          id: true,
+          title: true,
+          author: true,
+          description: true,
+          category: true,
+          stock: true,
+          cover: true,
+          fileUrl: true,
+        },
+      },
+    },
+    orderBy: { borrowDate: "desc" },
+  });
+
+  res.status(200).json({
+    status: "success",
+    data: borrows,
+  });
+});
+
 
 export const getAllBorrow = catchAsync(async (req, res) => {
   // Get pagination query params

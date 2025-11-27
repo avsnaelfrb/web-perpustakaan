@@ -8,7 +8,7 @@ export const handleFilePath = (req, res, next) => {
 
   if (req.files) {
     if (req.files['coverBook']?.[0]) {
-      req.body.coverPath = `/uploads/covers/${req.files['cover'][0].filename}`;
+      req.body.coverPath = `/uploads/covers/${req.files['coverBook'][0].filename}`;
     }
 
     if (req.files['bookFile']?.[0]) {

@@ -39,3 +39,20 @@ export const getAllReadLogs = catchAsync(async (req, res, next) => {
     data: logs,
   });
 });
+
+export const getMyReadLogs = catchAsync(async (req, res, next) => {
+  const userId = req.user.id;
+
+  const logs = await prisma.readLog.findMany({
+    where: { userId: Number(userId) },
+    include: {
+      book: { select: { title: true, author: true, type: true } },
+    },
+    orderBy: { readAt: "desc" },
+  });
+
+  res.status(200).json({
+    status: "success",
+    data: logs,
+  });
+});
