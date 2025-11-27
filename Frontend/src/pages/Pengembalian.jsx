@@ -1,38 +1,71 @@
-import React, { useEffect, useState } from 'react';
-import api from '../utils/api';
+import React, { useEffect, useState } from "react";
+import api from "../utils/api";
 
-export default function Pengembalian(){
+export default function Pengembalian() {
   const [returns, setReturns] = useState([]);
-  const load = async () => {
-    const res = await api.post('/return-requests');
-    if (res.ok) setReturns(res.data || []);
-  };
-  useEffect(() => { load(); }, []);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const approve = async (id) => {
-    const res = await api.post(`/return/${id}/approve`, { method: 'POST' });
-    if (res.ok) load();
-    else alert('Gagal approve pengembalian');
+  const load = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      // GET /api/borrow?status=RETURNED
+      const res = await api.get("/borrow", {
+        params: { status: "RETURNED", limit: 50 },
+      });
+
+      setReturns(res.data?.data || []);
+    } catch (err) {
+      console.error("Failed to load returns", err);
+      const msg =
+        err.response?.data?.message || err.message || "Gagal memuat data";
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  useEffect(() => {
+    load();
+  }, []);
 
   return (
     <div>
-      <h2 className="text-xl font-semibold mb-4">Permintaan Pengembalian</h2>
-      {returns.length === 0 ? <p className="text-gray-500">Tidak ada pengembalian</p> :
+      <h2 className="text-xl font-semibold mb-4">Riwayat Pengembalian</h2>
+
+      {loading && <p className="text-gray-500">Memuat data...</p>}
+      {error && <p className="text-red-500 text-sm mb-2">{error}</p>}
+
+      {!loading && returns.length === 0 && !error && (
+        <p className="text-gray-500">Belum ada buku yang dikembalikan</p>
+      )}
+
+      {!loading && returns.length > 0 && (
         <div className="space-y-3">
-          {returns.map(r => (
-            <div key={r._id} className="bg-white p-4 rounded shadow flex justify-between items-center">
+          {returns.map((r) => (
+            <div
+              key={r.id}
+              className="bg-white p-4 rounded shadow flex justify-between items-center"
+            >
               <div>
-                <div className="font-medium">{r.itemTitle}</div>
-                <div className="text-sm text-gray-500">oleh: {r.userName} • {new Date(r.returnedAt).toLocaleString()}</div>
-              </div>
-              <div>
-                <button onClick={() => approve(r._id)} className="px-3 py-1 bg-green-600 text-white rounded">Terima & Kembalikan Stok</button>
+                <div className="font-medium">
+                  {r.book?.title || "Judul tidak tersedia"}
+                </div>
+                <div className="text-sm text-gray-500">
+                  Oleh: {r.user?.name || "-"}{" "}
+                  {r.user?.nim && <>• NIM: {r.user.nim}</>} <br />
+                  Dikembalikan pada:{" "}
+                  {r.returnDate
+                    ? new Date(r.returnDate).toLocaleString()
+                    : "-"}
+                </div>
               </div>
             </div>
           ))}
         </div>
-      }
+      )}
     </div>
   );
 }

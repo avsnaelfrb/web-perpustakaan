@@ -3,7 +3,8 @@ import api from '../utils/api';
 
 export default function Profile() {
   const [profile, setProfile] = useState(null);
-  const [history, setHistory] = useState([]);
+  const [borrowHistory, setBorrowHistory] = useState([]);
+  const [readHistory, setReadHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
@@ -30,19 +31,31 @@ export default function Profile() {
   };
 
   useEffect(() => {
-    const loadProfile = async () => {
+    const loadProfileAndHistory = async () => {
       setLoading(true);
-      
-      const userData = JSON.parse(localStorage.getItem('currentUser'));
-      if (userData) {
-        setProfile(userData);
+  
+      try {
+        const userData = JSON.parse(localStorage.getItem("currentUser"));
+        if (userData) {
+          setProfile(userData);
+
+          const [borrowRes, readRes] = await Promise.all([
+            api.get("/borrow/userBorrow"),   
+            api.get("/readlog/userLog"),   
+          ]);
+  
+          setBorrowHistory(borrowRes.data?.data || []);
+          setReadHistory(readRes.data?.data || []);
+        }
+      } catch (err) {
+        console.error("Failed to load profile/history:", err);
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
     };
-
-    loadProfile();
-  }, []);
+  
+    loadProfileAndHistory();
+  }, []);  
 
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
@@ -244,30 +257,102 @@ export default function Profile() {
           </div>
 
           {/* History Card - Only for USER */}
-          {!isAdmin && (
-            <div className="bg-white p-4 lg:p-6 rounded-lg shadow-sm border border-gray-200">
-              <h2 className="text-lg lg:text-xl font-bold text-gray-800 mb-3 lg:mb-4">Riwayat Peminjaman</h2>
-              {history.length === 0 ? (
-                <div className="py-8 lg:py-12 text-center">
-                  <svg className="w-12 h-12 lg:w-16 lg:h-16 text-gray-300 mx-auto mb-3 lg:mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  <p className="text-gray-500 text-sm lg:text-base">Belum ada riwayat peminjaman</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {history.map((item, idx) => (
-                    <div key={idx} className="p-3 lg:p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
-                      <p className="font-semibold text-sm lg:text-base text-gray-900">{item.bookTitle}</p>
-                      <p className="text-xs lg:text-sm text-gray-600 mt-1">
-                        {item.borrowDate} - {item.returnDate || 'Belum dikembalikan'}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
+          {/* History Card - Only for USER */}
+{!isAdmin && (
+  <div className="space-y-6">
+    {/* Riwayat Peminjaman */}
+    <div className="bg-white p-4 lg:p-6 rounded-lg shadow-sm border border-gray-200">
+      <h2 className="text-lg lg:text-xl font-bold text-gray-800 mb-3 lg:mb-4">
+        Riwayat Peminjaman
+      </h2>
+
+      {borrowHistory.length === 0 ? (
+        <div className="py-8 lg:py-12 text-center">
+          <svg
+            className="w-12 h-12 lg:w-16 lg:h-16 text-gray-300 mx-auto mb-3 lg:mb-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            />
+          </svg>
+          <p className="text-gray-500 text-sm lg:text-base">
+            Belum ada riwayat peminjaman
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {borrowHistory.map((item) => (
+            <div
+              key={item.id}
+              className="p-3 lg:p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition"
+            >
+              <p className="font-semibold text-sm lg:text-base text-gray-900">
+                {item.book?.title || "Judul tidak tersedia"}
+              </p>
+              <p className="text-xs lg:text-sm text-gray-600 mt-1">
+                Status:{" "}
+                <span className="font-medium">{item.status}</span>
+              </p>
+              <p className="text-xs lg:text-sm text-gray-500 mt-1">
+                Tgl pinjam:{" "}
+                {item.borrowDate
+                  ? new Date(item.borrowDate).toLocaleDateString()
+                  : "-"}
+                {item.returnDate && (
+                  <>
+                    {" "}
+                    • Dikembalikan:{" "}
+                    {new Date(item.returnDate).toLocaleDateString()}
+                  </>
+                )}
+              </p>
             </div>
-          )}
+          ))}
+        </div>
+      )}
+    </div>
+
+    {/* Riwayat Membaca */}
+    <div className="bg-white p-4 lg:p-6 rounded-lg shadow-sm border border-gray-200">
+      <h2 className="text-lg lg:text-xl font-bold text-gray-800 mb-3 lg:mb-4">
+        Riwayat Membaca
+      </h2>
+
+      {readHistory.length === 0 ? (
+        <p className="text-gray-500 text-sm lg:text-base">
+          Belum ada riwayat membaca. Riwayat akan tercatat ketika admin
+          mengkonfirmasi pengembalian buku yang Anda pinjam.
+        </p>
+      ) : (
+        <div className="space-y-3">
+          {readHistory.map((log) => (
+            <div
+              key={log.id}
+              className="p-3 lg:p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition"
+            >
+              <p className="font-semibold text-sm lg:text-base text-gray-900">
+                {log.book?.title || "Judul tidak tersedia"}
+              </p>
+              <p className="text-xs lg:text-sm text-gray-600 mt-1">
+                {log.book?.author || "-"}{" "}
+                {log.book?.type && <>• {log.book.type}</>}
+              </p>
+              <p className="text-xs lg:text-sm text-gray-500 mt-1">
+                Dibaca pada: {new Date(log.readAt).toLocaleString()}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+)}
         </div>
       </div>
     </div>
