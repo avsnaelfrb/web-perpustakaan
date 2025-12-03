@@ -77,19 +77,51 @@ export const borrowBook = catchAsync(async (req, res, next) => {
   });
 });
 
-export const returnBook = catchAsync(async (req, res, next) => {
-  const { borrowId } = req.params;
+export const requestReturn = catchAsync(async (req, res, next) => {
+  const { borrowId } = req.params
+  const userId = req.user.id
 
   const borrow = await prisma.borrow.findUnique({
-    where: { id: borrowId },
-  });
+    where: { id: borrowId }
+  })
 
   if (!borrow) {
-    return next(new AppError("Data peminjaman tidak ditemukan", 404));
+    return next(new AppError('Data peminjaman tidak ditemukan', 404))
   }
 
-  if (borrow.status == "RETURNED") {
-    return next(new AppError('Sudah dikembalikan', 400))
+  if (borrow.userId !== userId) {
+    return next(new AppError("Anda tidak memiliki akses ke peminjaman ini", 403));
+  }
+
+  if (borrow.status !== 'BORROWED') {
+    return next(new AppError('Buku tidak dipinjam', 400))
+  }
+
+  const updateStatus = await prisma.borrow.update({
+    where: { id: borrowId },
+    data: { status: 'REQUESTED' }
+  })
+
+  res.status(200).json({
+    status: "success",
+    message: "Berhasil melakukan request pengembalian buku",
+    data: updateStatus
+  });
+});
+
+export const confirmReturn = catchAsync(async (req, res, next) => {
+  const { borrowId } = req.params
+
+  const borrow = await prisma.borrow.findUnique({
+    where: { id: borrowId }
+  })
+
+  if (!borrow) {
+    return next(new AppError('Data pinjaman tidak ditemukan', 404))
+  }
+
+  if (borrow.status === 'RETURNED') {
+    return next(new AppError('Buku sudah dikembalikan sebelumnya', 400))
   }
 
   const returnDate = new Date();
@@ -126,7 +158,7 @@ export const returnBook = catchAsync(async (req, res, next) => {
     message: `Buku berhasil dikembalikan ${overDueMessage}.`,
     data: result,
   });
-});
+}); 
 
 export const getAllBorrow = catchAsync(async (req, res) => {
   // Get pagination query params
