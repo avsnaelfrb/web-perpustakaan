@@ -95,6 +95,7 @@ enum BorrowStatus {
   BORROWED
   RETURNED
   LATE
+  REQUESTED
 }
 
 enum BookCategory {
